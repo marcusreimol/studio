@@ -1,3 +1,4 @@
+
 import {
   File,
   ListFilter,
@@ -92,16 +93,14 @@ export default function DemandsPage() {
                   <TableHead className="hidden md:table-cell">
                     Publicado em
                   </TableHead>
-                  <TableHead>
-                    <span className="sr-only">Ações</span>
-                  </TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {demands.map((demand) => (
                   <TableRow key={demand.id}>
                     <TableCell className="font-medium">
-                      <Link href="#" className="hover:underline">{demand.title}</Link>
+                       {demand.title}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{demand.category}</Badge>
@@ -112,24 +111,10 @@ export default function DemandsPage() {
                     <TableCell className="hidden md:table-cell">
                       {demand.postedAt}
                     </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            aria-haspopup="true"
-                            size="icon"
-                            variant="ghost"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                          <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
-                          <DropdownMenuItem>Enviar Proposta</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                    <TableCell className="text-right">
+                        <Button asChild variant="outline" size="sm">
+                            <Link href="#">Ver Detalhes</Link>
+                        </Button>
                     </TableCell>
                   </TableRow>
                 ))}

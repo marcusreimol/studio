@@ -11,6 +11,7 @@ import {
     signOut,
 } from "firebase/auth";
 import { getFirestore, doc, setDoc, updateDoc } from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -28,6 +29,7 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
 const signInWithGoogle = async (): Promise<User | null> => {
@@ -71,4 +73,17 @@ const createUserWithEmailAndPassword = async (email: string, password: string, f
 }
 
 
-export { auth, db, signInWithGoogle, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, doc, updateDoc };
+export { 
+    auth, 
+    db, 
+    storage,
+    signInWithGoogle, 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword, 
+    signOut, 
+    doc, 
+    updateDoc,
+    ref,
+    uploadBytes,
+    getDownloadURL 
+};
