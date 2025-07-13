@@ -1,3 +1,6 @@
+
+"use client";
+
 import Link from "next/link";
 import {
   Activity,
@@ -11,6 +14,11 @@ import {
   Search,
   Users,
 } from "lucide-react";
+
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { useDocumentData } from 'react-firebase-hooks/firestore';
+import { auth, db } from '@/lib/firebase';
+import { doc } from 'firebase/firestore';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -31,17 +39,47 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { demands } from "@/lib/data";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Dashboard() {
+  const [user] = useAuthState(auth);
+  const userDocRef = user ? doc(db, "users", user.uid) : null;
+  const [profile, loading] = useDocumentData(userDocRef);
+
   const myDemands = demands.slice(0, 2);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-9 w-64" />
+          <Skeleton className="h-10 w-44" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+        </div>
+        <div className="grid gap-4 md:gap-8">
+          <Skeleton className="h-96" />
+        </div>
+      </div>
+    );
+  }
+
+  const isSindico = profile?.userType === 'sindico';
 
   return (
     <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold md:text-3xl font-headline">Dashboard do Síndico</h1>
-             <Button asChild>
-                <Link href="/demands/new">Publicar Nova Demanda</Link>
-            </Button>
+            <h1 className="text-2xl font-semibold md:text-3xl font-headline">
+              {isSindico ? 'Dashboard do Síndico' : 'Dashboard do Fornecedor'}
+            </h1>
+             {isSindico && (
+              <Button asChild>
+                  <Link href="/demands/new">Publicar Nova Demanda</Link>
+              </Button>
+            )}
         </div>
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
@@ -89,9 +127,11 @@ export default function Dashboard() {
         <Card className="xl:col-span-2">
           <CardHeader className="flex flex-row items-center">
             <div className="grid gap-2">
-              <CardTitle>Minhas Demandas Recentes</CardTitle>
+              <CardTitle>
+                {isSindico ? 'Minhas Demandas Recentes' : 'Demandas Recentes'}
+              </CardTitle>
               <CardDescription>
-                Demandas publicadas pelo seu condomínio.
+                {isSindico ? 'Demandas publicadas pelo seu condomínio.' : 'Últimas demandas abertas na plataforma.'}
               </CardDescription>
             </div>
             <Button asChild size="sm" className="ml-auto gap-1">

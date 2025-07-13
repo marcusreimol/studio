@@ -15,7 +15,9 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '@/lib/firebase';
+import { useDocumentData } from 'react-firebase-hooks/firestore';
+import { auth, db } from '@/lib/firebase';
+import { doc } from 'firebase/firestore';
 
 
 import { Button } from "@/components/ui/button";
@@ -45,22 +47,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, loading, error] = useAuthState(auth);
-  const [isClient, setIsClient] = useState(false);
+  
+  const userDocRef = user ? doc(db, "users", user.uid) : null;
+  const [profile, profileLoading] = useDocumentData(userDocRef);
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (isClient && !loading && !user) {
+    if (!loading && !user) {
       router.push('/login');
     }
-  }, [user, loading, router, isClient]);
+  }, [user, loading, router]);
 
 
   const isActive = (path: string) => pathname === path;
+  
+  const isSindico = profile?.userType === 'sindico';
+  const isProvider = profile?.userType === 'prestador';
 
-  if (loading || !isClient) {
+  if (loading || profileLoading) {
     return (
        <div className="flex items-center justify-center min-h-screen">
           <div className="flex flex-col items-center gap-4">
@@ -94,14 +97,29 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="/demands" isActive={isActive('/demands')} asChild>
-                <Link href="/demands">
-                    <Briefcase />
-                    <span>Demandas</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            
+            {isSindico && (
+                <SidebarMenuItem>
+                <SidebarMenuButton href="/demands" isActive={isActive('/demands')} asChild>
+                    <Link href="/demands">
+                        <Briefcase />
+                        <span>Minhas Demandas</span>
+                    </Link>
+                </SidebarMenuButton>
+                </SidebarMenuItem>
+            )}
+
+            {isProvider && (
+                <SidebarMenuItem>
+                <SidebarMenuButton href="/demands" isActive={isActive('/demands')} asChild>
+                    <Link href="/demands">
+                        <Briefcase />
+                        <span>Buscar Demandas</span>
+                    </Link>
+                </SidebarMenuButton>
+                </SidebarMenuItem>
+            )}
+
             <SidebarMenuItem>
               <SidebarMenuButton href="/campaigns" isActive={isActive('/campaigns')} asChild>
                 <Link href="/campaigns">
@@ -131,7 +149,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarFooter>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton href="#">
+                    <SidebarMenuButton href="/profile">
                         <UserCircle />
                         <span>Meu Perfil</span>
                     </SidebarMenuButton>
