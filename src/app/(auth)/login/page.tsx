@@ -31,10 +31,10 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
-    if (user) {
+    if (isClient && user) {
       router.push('/dashboard');
     }
-  }, [user, router]);
+  }, [user, router, isClient]);
 
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
@@ -71,7 +71,7 @@ export default function LoginPage() {
     }
   }
 
-  if (loading || !isClient || user) {
+  if (loading || !isClient || (isClient && user)) {
      return (
        <div className="flex items-center justify-center min-h-screen">
           <div className="flex flex-col items-center gap-4">

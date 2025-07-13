@@ -9,8 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Logo from "@/components/logo";
-import GoogleIcon from "@/components/google-icon";
-import { signInWithGoogle, createUserWithEmailAndPassword, auth } from "@/lib/firebase";
+import { createUserWithEmailAndPassword, auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -22,7 +21,6 @@ export default function RegisterPage() {
     const [password, setPassword] = useState('');
     const [fullName, setFullName] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
     const [user, loading] = useAuthState(auth);
     const [isClient, setIsClient] = useState(false);
 
@@ -31,48 +29,37 @@ export default function RegisterPage() {
     }, []);
 
     useEffect(() => {
-        if (user) {
-        router.push("/dashboard");
+        if (isClient && user) {
+            router.push("/dashboard");
         }
-    }, [user, router]);
+    }, [user, router, isClient]);
 
-
-    const handleGoogleRegister = async () => {
-        setIsGoogleLoading(true);
-        try {
-            await signInWithGoogle();
-            // The useEffect hook will handle the redirect
-        } catch(error) {
-             console.error(error);
-             toast({
-                variant: "destructive",
-                title: "Erro de Autenticação",
-                description: "Ocorreu um erro inesperado. Tente novamente.",
-            });
-        } finally {
-            setIsGoogleLoading(false);
-        }
-    };
 
     const handleEmailRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         try {
             await createUserWithEmailAndPassword(auth, email, password);
-            // The useEffect hook will handle the redirect
+            // The useEffect hook will handle the redirect after the auth state changes
         } catch (error: any) {
             console.error(error);
+            let errorMessage = "Não foi possível criar sua conta. Verifique os dados ou tente outro e-mail.";
+            if (error.code === 'auth/email-already-in-use') {
+                errorMessage = "Este e-mail já está em uso. Tente fazer login ou use um e-mail diferente.";
+            } else if (error.code === 'auth/weak-password') {
+                errorMessage = "A senha é muito fraca. Por favor, use pelo menos 6 caracteres.";
+            }
              toast({
                 variant: "destructive",
                 title: "Erro no Cadastro",
-                description: "Não foi possível criar sua conta. Verifique os dados ou tente outro e-mail.",
+                description: errorMessage,
             });
         } finally {
             setIsLoading(false);
         }
     }
 
-     if (loading || !isClient || user) {
+     if (loading || !isClient || (isClient && user)) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="flex flex-col items-center gap-4">
@@ -105,7 +92,7 @@ export default function RegisterPage() {
                 required 
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                disabled={isLoading || isGoogleLoading}
+                disabled={isLoading}
                 />
             </div>
             <div className="grid gap-2">
@@ -117,7 +104,7 @@ export default function RegisterPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading || isGoogleLoading}
+                disabled={isLoading}
               />
             </div>
             <div className="grid gap-2">
@@ -128,13 +115,13 @@ export default function RegisterPage() {
                 required 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading || isGoogleLoading}
+                disabled={isLoading}
               />
             </div>
             
             <div className="grid gap-2">
               <Label>Você é:</Label>
-              <RadioGroup defaultValue="sindico" className="flex gap-4" disabled={isLoading || isGoogleLoading}>
+              <RadioGroup defaultValue="sindico" className="flex gap-4" disabled={isLoading}>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="sindico" id="r-sindico" />
                   <Label htmlFor="r-sindico" className="font-body">Síndico</Label>
@@ -146,13 +133,9 @@ export default function RegisterPage() {
               </RadioGroup>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Criar Conta
-            </Button>
-            <Button variant="outline" type="button" className="w-full" onClick={handleGoogleRegister} disabled={isLoading || isGoogleLoading}>
-               {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon className="mr-2 h-4 w-4" />}
-              Cadastrar com Google
             </Button>
           </form>
           <div className="mt-4 text-center text-sm font-body">
