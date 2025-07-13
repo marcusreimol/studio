@@ -1,4 +1,5 @@
 
+
 import {
   File,
   ListFilter,
@@ -113,7 +114,7 @@ export default function DemandsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                         <Button asChild variant="outline" size="sm">
-                            <Link href="#">Ver Detalhes</Link>
+                            <Link href={`/demands/${demand.id}`}>Ver Detalhes</Link>
                         </Button>
                     </TableCell>
                   </TableRow>
