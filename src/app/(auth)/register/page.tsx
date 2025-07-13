@@ -136,9 +136,9 @@ export default function RegisterPage() {
               <RadioGroup 
                 defaultValue="sindico" 
                 className="flex gap-4" 
-                disabled={isLoading}
                 onValueChange={setUserType}
                 value={userType}
+                disabled={isLoading}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="sindico" id="r-sindico" />

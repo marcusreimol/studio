@@ -33,6 +33,17 @@ const signInWithGoogle = async (): Promise<User | null> => {
         const result = await signInWithPopup(auth, googleProvider);
         // The signed-in user info.
         const user = result.user;
+        // Check if user data already exists
+        const userDocRef = doc(db, "users", user.uid);
+        // Optionally save or update user data in Firestore
+        await setDoc(userDocRef, {
+            uid: user.uid,
+            email: user.email,
+            fullName: user.displayName,
+            userType: 'sindico', // default or ask user
+            createdAt: new Date(),
+        }, { merge: true }); // merge true to avoid overwriting existing data
+        
         console.log("User signed in: ", user);
         return user;
     } catch (error) {
