@@ -5,9 +5,10 @@ import {
     GoogleAuthProvider, 
     signInWithPopup, 
     User,
-    createUserWithEmailAndPassword,
+    createUserWithEmailAndPassword as firebaseCreateUserWithEmailAndPassword,
     signInWithEmailAndPassword
 } from "firebase/auth";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -24,6 +25,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
+const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
 const signInWithGoogle = async (): Promise<User | null> => {
@@ -39,5 +41,21 @@ const signInWithGoogle = async (): Promise<User | null> => {
     }
 }
 
+const createUserWithEmailAndPassword = async (email: string, password: string, fullName: string, userType: string) => {
+    const userCredential = await firebaseCreateUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    
+    // Save additional user data to Firestore
+    await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        email: user.email,
+        fullName: fullName,
+        userType: userType,
+        createdAt: new Date(),
+    });
 
-export { auth, signInWithGoogle, createUserWithEmailAndPassword, signInWithEmailAndPassword };
+    return userCredential;
+}
+
+
+export { auth, db, signInWithGoogle, createUserWithEmailAndPassword, signInWithEmailAndPassword };

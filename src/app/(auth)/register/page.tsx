@@ -13,6 +13,7 @@ import { createUserWithEmailAndPassword, auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useAuthState } from "react-firebase-hooks/auth";
+import GoogleIcon from "@/components/google-icon";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -20,6 +21,7 @@ export default function RegisterPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [fullName, setFullName] = useState('');
+    const [userType, setUserType] = useState('sindico');
     const [isLoading, setIsLoading] = useState(false);
     const [user, loading] = useAuthState(auth);
     const [isClient, setIsClient] = useState(false);
@@ -38,8 +40,18 @@ export default function RegisterPage() {
     const handleEmailRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+        if (password.length < 6) {
+            toast({
+                variant: "destructive",
+                title: "Erro no Cadastro",
+                description: "A senha deve ter pelo menos 6 caracteres.",
+            });
+            setIsLoading(false);
+            return;
+        }
+
         try {
-            await createUserWithEmailAndPassword(auth, email, password);
+            await createUserWithEmailAndPassword(email, password, fullName, userType);
             // The useEffect hook will handle the redirect after the auth state changes
         } catch (error: any) {
             console.error(error);
@@ -121,7 +133,13 @@ export default function RegisterPage() {
             
             <div className="grid gap-2">
               <Label>Você é:</Label>
-              <RadioGroup defaultValue="sindico" className="flex gap-4" disabled={isLoading}>
+              <RadioGroup 
+                defaultValue="sindico" 
+                className="flex gap-4" 
+                disabled={isLoading}
+                onValueChange={setUserType}
+                value={userType}
+              >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="sindico" id="r-sindico" />
                   <Label htmlFor="r-sindico" className="font-body">Síndico</Label>
