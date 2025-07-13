@@ -1,7 +1,19 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Briefcase, Users } from "lucide-react";
+import { DollarSign, Briefcase, Users, HeartHandshake, Star } from "lucide-react";
+import { campaigns } from "@/lib/data";
 
 export default function AnalyticsPage() {
+    const totalCampaigns = campaigns.length;
+    
+    // Calculate total unique supporters
+    const allSupporters = new Set();
+    campaigns.forEach(campaign => {
+        campaign.supporters.forEach(supporter => {
+            allSupporters.add(supporter.id);
+        });
+    });
+    const totalUniqueSupporters = allSupporters.size;
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -54,11 +66,24 @@ export default function AnalyticsPage() {
        <div className="mt-8">
            <Card>
                 <CardHeader>
-                    <CardTitle>Visão Geral</CardTitle>
-                    <CardDescription>Mais dados e gráficos aparecerão aqui em breve.</CardDescription>
+                    <CardTitle>Visão Geral de Campanhas</CardTitle>
+                    <CardDescription>Dados sobre o engajamento das campanhas de sustentabilidade.</CardDescription>
                 </CardHeader>
-                <CardContent className="flex items-center justify-center h-64 bg-secondary rounded-b-lg">
-                    <p className="text-muted-foreground">Em desenvolvimento...</p>
+                <CardContent className="grid gap-6 md:grid-cols-2">
+                    <div className="flex items-center gap-4 p-4 rounded-lg bg-secondary">
+                        <HeartHandshake className="h-8 w-8 text-primary" />
+                        <div>
+                            <p className="text-sm text-muted-foreground">Total de Campanhas</p>
+                            <p className="text-2xl font-bold">{totalCampaigns}</p>
+                        </div>
+                    </div>
+                     <div className="flex items-center gap-4 p-4 rounded-lg bg-secondary">
+                        <Star className="h-8 w-8 text-primary" />
+                        <div>
+                            <p className="text-sm text-muted-foreground">Apoiadores Únicos</p>
+                            <p className="text-2xl font-bold">{totalUniqueSupporters}</p>
+                        </div>
+                    </div>
                 </CardContent>
            </Card>
       </div>
