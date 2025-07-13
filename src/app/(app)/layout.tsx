@@ -46,7 +46,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarHeader>
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
               <Logo className="h-8 w-8 text-primary" />
-              <span className="text-lg font-headline text-foreground">SustentaZONA</span>
+              <span className="text-lg font-headline text-foreground">sindi.club</span>
             </Link>
         </SidebarHeader>
         <SidebarContent>

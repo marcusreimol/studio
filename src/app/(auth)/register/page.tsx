@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Logo from "@/components/logo";
+import GoogleIcon from "@/components/google-icon";
 
 export default function RegisterPage() {
   return (
@@ -58,6 +59,7 @@ export default function RegisterPage() {
               Criar Conta
             </Button>
             <Button variant="outline" className="w-full">
+               <GoogleIcon className="mr-2 h-4 w-4" />
               Cadastrar com Google
             </Button>
           </div>

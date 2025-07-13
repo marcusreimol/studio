@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/logo";
+import GoogleIcon from "@/components/google-icon";
 
 export default function LoginPage() {
   return (
@@ -45,6 +46,7 @@ export default function LoginPage() {
               Login
             </Button>
             <Button variant="outline" className="w-full">
+              <GoogleIcon className="mr-2 h-4 w-4" />
               Entrar com Google
             </Button>
           </div>

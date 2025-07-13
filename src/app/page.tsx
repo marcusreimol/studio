@@ -11,7 +11,7 @@ export default function Home() {
       <header className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2">
           <Logo className="h-8 w-8 text-primary" />
-          <span className="text-xl font-bold font-headline text-foreground">SustentaZONA</span>
+          <span className="text-xl font-bold font-headline text-foreground">sindi.club</span>
         </Link>
         <nav className="flex items-center gap-4">
           <Button variant="ghost" asChild>
@@ -96,7 +96,7 @@ export default function Home() {
 
       <footer className="bg-card border-t">
         <div className="container mx-auto py-6 px-4 md:px-6 flex flex-col md:flex-row items-center justify-between">
-          <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} SustentaZONA. Todos os direitos reservados.</p>
+          <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} sindi.club. Todos os direitos reservados.</p>
           <div className="flex gap-4 mt-4 md:mt-0">
              <Link className="text-sm text-muted-foreground hover:text-foreground" href="#">
               Termos de Serviço
