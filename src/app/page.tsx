@@ -45,10 +45,10 @@ export default function Home() {
               A plataforma para síndicos e prestadores de serviço na Zona Sul do Rio de Janeiro e Maricá. Publique demandas, receba propostas e promova a sustentabilidade.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-              <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground py-6 text-lg">
                 <Link href="/register">Sou Síndico</Link>
               </Button>
-              <Button size="lg" variant="secondary" asChild>
+              <Button size="lg" variant="secondary" asChild className="py-6 text-lg">
                 <Link href="/register">Sou Prestador</Link>
               </Button>
             </div>
@@ -116,7 +116,7 @@ export default function Home() {
               </p>
             </div>
             <div className="flex justify-center">
-              <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+              <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground py-6 text-lg">
                 <Link href="/register">Comece Agora</Link>
               </Button>
             </div>
