@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -23,6 +24,11 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [user, loading] = useAuthState(auth);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -65,7 +71,7 @@ export default function LoginPage() {
     }
   }
 
-  if (loading) {
+  if (loading || !isClient) {
      return (
        <div className="flex items-center justify-center min-h-screen">
           <div className="flex flex-col items-center gap-4">
