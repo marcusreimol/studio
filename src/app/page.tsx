@@ -2,10 +2,21 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building, Users, Handshake, Leaf } from 'lucide-react';
+import { Building, Users, Handshake, Leaf, Facebook } from 'lucide-react';
 import Logo from '@/components/logo';
 
 export default function Home() {
+  const facebookGroups = [
+      { name: "Síndicos & Condomínios", url: "https://www.facebook.com/groups/sindicosecondominiosp" },
+      { name: "Síndicos Copacabana", url: "https://www.facebook.com/groups/sindicoscopacabana/" },
+      { name: "Síndicos & Condomínios Recreio", url: "https://www.facebook.com/groups/sindicosecondominiosrecreio/" },
+      { name: "Síndicos Barra da Tijuca", url: "https://www.facebook.com/groups/sindicosbarradatijuca/" },
+      { name: "JPA RJ", url: "https://www.facebook.com/groups/jparj/" },
+      { name: "Síndicos Ipanema", url: "https://www.facebook.com/groups/sindicosipanema" },
+      { name: "Barra da Tijuca RJ", url: "https://www.facebook.com/groups/barradatijucarj" },
+      { name: "Pingo d'água", url: "https://www.facebook.com/groups/pingodagua" },
+  ];
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
@@ -75,7 +86,26 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-secondary">
+        <section id="community" className="w-full py-12 md:py-24 lg:py-32 bg-secondary">
+          <div className="container mx-auto px-4 md:px-6">
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center font-headline">Conecte-se com a Comunidade</h2>
+            <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed text-center mt-4 font-body">
+              Participe dos principais grupos de síndicos e administradores no Facebook.
+            </p>
+            <div className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-4 mt-12">
+              {facebookGroups.map((group) => (
+                <a href={group.url} key={group.name} target="_blank" rel="noopener noreferrer" className="group">
+                  <Card className="h-full flex flex-col items-center justify-center p-6 text-center transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
+                    <Facebook className="h-10 w-10 text-blue-600 mb-4" />
+                    <CardTitle className="text-lg font-bold font-body group-hover:text-primary">{group.name}</CardTitle>
+                  </Card>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-background">
           <div className="container grid items-center justify-center gap-4 px-4 text-center md:px-6 lg:gap-10">
             <div className="space-y-3">
               <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight font-headline">
