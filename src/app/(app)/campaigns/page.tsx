@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Progress } from "@/components/ui/progress";
 import { campaigns } from "@/lib/data";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function CampaignsPage() {
   return (
@@ -45,8 +46,10 @@ export default function CampaignsPage() {
                         </div>
                     </CardContent>
                     <CardFooter>
-                        <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-                            Quero Apoiar
+                        <Button asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+                            <Link href={`/campaigns/${campaign.id}/supporters`}>
+                                Ver Apoiadores
+                            </Link>
                         </Button>
                     </CardFooter>
                 </Card>

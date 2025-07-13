@@ -111,16 +111,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton href="#" asChild>
-                <Link href="#">
+              <SidebarMenuButton href="/providers" isActive={isActive('/providers')} asChild>
+                <Link href="/providers">
                     <Users />
                     <span>Fornecedores</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
              <SidebarMenuItem>
-              <SidebarMenuButton href="#" asChild>
-                <Link href="#">
+              <SidebarMenuButton href="/analytics" isActive={isActive('/analytics')} asChild>
+                <Link href="/analytics">
                     <LineChart />
                     <span>Analytics</span>
                 </Link>

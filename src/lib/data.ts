@@ -1,3 +1,4 @@
+
 export type Demand = {
   id: string;
   title: string;
@@ -57,6 +58,13 @@ export const demands: Demand[] = [
   },
 ];
 
+export type CampaignSupporter = {
+    id: string;
+    name: string;
+    amount: number;
+    logo: string;
+}
+
 export type Campaign = {
   id: string;
   title: string;
@@ -65,6 +73,7 @@ export type Campaign = {
   current: number;
   image: string;
   sponsor: string;
+  supporters: CampaignSupporter[];
 };
 
 export const campaigns: Campaign[] = [
@@ -76,6 +85,10 @@ export const campaigns: Campaign[] = [
     current: 950,
     image: 'https://placehold.co/600x400.png',
     sponsor: 'Jardim Feliz Paisagismo',
+    supporters: [
+        { id: 's1', name: 'Jardim Feliz Paisagismo', amount: 500, logo: 'https://placehold.co/40x40.png' },
+        { id: 's2', name: 'Verde Vida Comunitária', amount: 450, logo: 'https://placehold.co/40x40.png' },
+    ]
   },
   {
     id: 'c2',
@@ -85,6 +98,10 @@ export const campaigns: Campaign[] = [
     current: 2800,
     image: 'https://placehold.co/600x400.png',
     sponsor: 'Recicla Tudo SA',
+    supporters: [
+        { id: 's3', name: 'Recicla Tudo SA', amount: 2000, logo: 'https://placehold.co/40x40.png' },
+        { id: 's4', name: 'Condomínio Amigo do Ambiente', amount: 800, logo: 'https://placehold.co/40x40.png' },
+    ]
   },
   {
     id: 'c3',
@@ -94,5 +111,26 @@ export const campaigns: Campaign[] = [
     current: 1200,
     image: 'https://placehold.co/600x400.png',
     sponsor: 'Apoio Construtora',
+    supporters: [
+        { id: 's5', name: 'Apoio Construtora', amount: 1200, logo: 'https://placehold.co/40x40.png' },
+    ]
   },
+];
+
+export type Provider = {
+    id: string;
+    name: string;
+    category: string;
+    rating: number;
+    location: string;
+    logo: string;
+};
+
+export const providers: Provider[] = [
+    { id: 'p1', name: 'Hidráulica Rápida', category: 'Hidráulica', rating: 4.8, location: 'Copacabana', logo: 'https://placehold.co/64x64.png' },
+    { id: 'p2', name: 'Eletricista 24h', category: 'Elétrica', rating: 4.9, location: 'Ipanema', logo: 'https://placehold.co/64x64.png' },
+    { id: 'p3', name: 'Pinturas & Cia', category: 'Pintura', rating: 4.7, location: 'Maricá', logo: 'https://placehold.co/64x64.png' },
+    { id: 'p4', name: 'Segurança Total', category: 'Segurança', rating: 5.0, location: 'Leblon', logo: 'https://placehold.co/64x64.png' },
+    { id: 'p5', name: 'Jardim Feliz Paisagismo', category: 'Jardinagem', rating: 4.9, location: 'Barra da Tijuca', logo: 'https://placehold.co/64x64.png' },
+    { id: 'p6', name: 'Limpeza Brilhante', category: 'Limpeza', rating: 4.6, location: 'Copacabana', logo: 'https://placehold.co/64x64.png' },
 ];
