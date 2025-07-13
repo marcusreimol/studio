@@ -1,6 +1,13 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
+import { 
+    getAuth, 
+    GoogleAuthProvider, 
+    signInWithPopup, 
+    User,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword
+} from "firebase/auth";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -33,4 +40,4 @@ const signInWithGoogle = async (): Promise<User | null> => {
 }
 
 
-export { auth, signInWithGoogle };
+export { auth, signInWithGoogle, createUserWithEmailAndPassword, signInWithEmailAndPassword };

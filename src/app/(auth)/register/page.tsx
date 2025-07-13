@@ -1,4 +1,5 @@
 "use client"
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -8,25 +9,62 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Logo from "@/components/logo";
 import GoogleIcon from "@/components/google-icon";
-import { signInWithGoogle } from "@/lib/firebase";
+import { signInWithGoogle, createUserWithEmailAndPassword, auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 export default function RegisterPage() {
     const router = useRouter();
     const { toast } = useToast();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [fullName, setFullName] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
 
     const handleGoogleRegister = async () => {
-        const user = await signInWithGoogle();
-        if (user) {
-        router.push("/dashboard");
-        } else {
+        setIsGoogleLoading(true);
+        try {
+            const user = await signInWithGoogle();
+            if (user) {
+            router.push("/dashboard");
+            } else {
+                 toast({
+                    variant: "destructive",
+                    title: "Erro de Autenticação",
+                    description: "Não foi possível se cadastrar com o Google. Tente novamente.",
+                });
+            }
+        } catch(error) {
+             console.error(error);
              toast({
                 variant: "destructive",
                 title: "Erro de Autenticação",
-                description: "Não foi possível se cadastrar com o Google. Tente novamente.",
+                description: "Ocorreu um erro inesperado. Tente novamente.",
             });
+        } finally {
+            setIsGoogleLoading(false);
         }
     };
+
+    const handleEmailRegister = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        try {
+            await createUserWithEmailAndPassword(auth, email, password);
+            router.push('/dashboard');
+        } catch (error: any) {
+            console.error(error);
+             toast({
+                variant: "destructive",
+                title: "Erro no Cadastro",
+                description: "Não foi possível criar sua conta. Verifique os dados ou tente outro e-mail.",
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary py-12">
@@ -41,10 +79,17 @@ export default function RegisterPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4">
+          <form onSubmit={handleEmailRegister} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="full-name">Nome Completo</Label>
-              <Input id="full-name" placeholder="Seu nome" required />
+              <Input 
+                id="full-name" 
+                placeholder="Seu nome" 
+                required 
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                disabled={isLoading || isGoogleLoading}
+                />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
@@ -53,16 +98,26 @@ export default function RegisterPage() {
                 type="email"
                 placeholder="seu@email.com"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading || isGoogleLoading}
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" required />
+              <Input 
+                id="password" 
+                type="password" 
+                required 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading || isGoogleLoading}
+              />
             </div>
             
             <div className="grid gap-2">
               <Label>Você é:</Label>
-              <RadioGroup defaultValue="sindico" className="flex gap-4">
+              <RadioGroup defaultValue="sindico" className="flex gap-4" disabled={isLoading || isGoogleLoading}>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="sindico" id="r-sindico" />
                   <Label htmlFor="r-sindico" className="font-body">Síndico</Label>
@@ -74,14 +129,15 @@ export default function RegisterPage() {
               </RadioGroup>
             </div>
 
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Criar Conta
             </Button>
-            <Button variant="outline" className="w-full" onClick={handleGoogleRegister}>
-               <GoogleIcon className="mr-2 h-4 w-4" />
+            <Button variant="outline" type="button" className="w-full" onClick={handleGoogleRegister} disabled={isLoading || isGoogleLoading}>
+               {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon className="mr-2 h-4 w-4" />}
               Cadastrar com Google
             </Button>
-          </div>
+          </form>
           <div className="mt-4 text-center text-sm font-body">
             Já possui uma conta?{" "}
             <Link href="/login" className="underline">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -8,26 +9,61 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/logo";
 import GoogleIcon from "@/components/google-icon";
-import { signInWithGoogle } from "@/lib/firebase";
+import { signInWithGoogle, signInWithEmailAndPassword, auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
-    const user = await signInWithGoogle();
-    if (user) {
-      router.push("/dashboard");
-    } else {
-        toast({
+    setIsGoogleLoading(true);
+    try {
+        const user = await signInWithGoogle();
+        if (user) {
+        router.push("/dashboard");
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Erro de Autenticação",
+                description: "Não foi possível fazer login com o Google. Tente novamente.",
+            });
+        }
+    } catch (error) {
+        console.error(error);
+         toast({
             variant: "destructive",
             title: "Erro de Autenticação",
-            description: "Não foi possível fazer login com o Google. Tente novamente.",
+            description: "Ocorreu um erro inesperado. Tente novamente.",
         });
+    } finally {
+        setIsGoogleLoading(false);
     }
   };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        router.push('/dashboard');
+    } catch (error: any) {
+        console.error(error);
+        toast({
+            variant: "destructive",
+            title: "Erro de Login",
+            description: "E-mail ou senha incorretos. Verifique e tente novamente.",
+        });
+    } finally {
+        setIsLoading(false);
+    }
+  }
 
 
   return (
@@ -43,7 +79,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4">
+          <form onSubmit={handleEmailLogin} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -51,6 +87,9 @@ export default function LoginPage() {
                 type="email"
                 placeholder="seu@email.com"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading || isGoogleLoading}
               />
             </div>
             <div className="grid gap-2">
@@ -63,16 +102,24 @@ export default function LoginPage() {
                   Esqueceu sua senha?
                 </Link>
               </div>
-              <Input id="password" type="password" required />
+              <Input 
+                id="password" 
+                type="password" 
+                required 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading || isGoogleLoading}
+              />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Login
             </Button>
-            <Button variant="outline" className="w-full" onClick={handleGoogleLogin}>
-              <GoogleIcon className="mr-2 h-4 w-4" />
+            <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading || isGoogleLoading}>
+              {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon className="mr-2 h-4 w-4" />}
               Entrar com Google
             </Button>
-          </div>
+          </form>
           <div className="mt-4 text-center text-sm font-body">
             Não tem uma conta?{" "}
             <Link href="/register" className="underline">
