@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import GoogleIcon from "@/components/google-icon";
 import { signInWithGoogle, signInWithEmailAndPassword, auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { useAuthState } from "react-firebase-hooks/auth";
 
 
 export default function LoginPage() {
@@ -21,26 +22,25 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [user, loading] = useAuthState(auth);
+
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
 
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
     try {
-        const user = await signInWithGoogle();
-        if (user) {
-        router.push("/dashboard");
-        } else {
-            toast({
-                variant: "destructive",
-                title: "Erro de Autenticação",
-                description: "Não foi possível fazer login com o Google. Tente novamente.",
-            });
-        }
+        await signInWithGoogle();
+        // The useEffect hook will handle the redirect
     } catch (error) {
         console.error(error);
          toast({
             variant: "destructive",
             title: "Erro de Autenticação",
-            description: "Ocorreu um erro inesperado. Tente novamente.",
+            description: "Não foi possível fazer login com o Google. Tente novamente.",
         });
     } finally {
         setIsGoogleLoading(false);
@@ -52,7 +52,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
         await signInWithEmailAndPassword(auth, email, password);
-        router.push('/dashboard');
+        // The useEffect hook will handle the redirect
     } catch (error: any) {
         console.error(error);
         toast({
@@ -63,6 +63,17 @@ export default function LoginPage() {
     } finally {
         setIsLoading(false);
     }
+  }
+
+  if (loading) {
+     return (
+       <div className="flex items-center justify-center min-h-screen">
+          <div className="flex flex-col items-center gap-4">
+             <Logo className="h-12 w-12 text-primary animate-pulse" />
+             <p className="text-muted-foreground">Carregando...</p>
+          </div>
+       </div>
+    )
   }
 
 

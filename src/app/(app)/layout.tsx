@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from 'react';
 import Link from "next/link";
 import {
   Bell,
@@ -11,7 +12,10 @@ import {
   HeartHandshake,
   UserCircle,
 } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '@/lib/firebase';
+
 
 import { Button } from "@/components/ui/button";
 import {
@@ -34,11 +38,36 @@ import {
 } from "@/components/ui/sidebar";
 import Logo from "@/components/logo";
 import AppHeader from "@/components/app-header";
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, loading, error] = useAuthState(auth);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
 
   const isActive = (path: string) => pathname === path;
+
+  if (loading) {
+    return (
+       <div className="flex items-center justify-center min-h-screen">
+          <div className="flex flex-col items-center gap-4">
+             <Logo className="h-12 w-12 text-primary animate-pulse" />
+             <p className="text-muted-foreground">Carregando...</p>
+          </div>
+       </div>
+    )
+  }
+
+  if (!user) {
+    return null; // or a redirect component
+  }
 
   return (
     <SidebarProvider>
