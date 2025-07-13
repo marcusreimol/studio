@@ -1,5 +1,6 @@
 "use client"
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,8 +8,26 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Logo from "@/components/logo";
 import GoogleIcon from "@/components/google-icon";
+import { signInWithGoogle } from "@/lib/firebase";
+import { useToast } from "@/hooks/use-toast";
 
 export default function RegisterPage() {
+    const router = useRouter();
+    const { toast } = useToast();
+
+    const handleGoogleRegister = async () => {
+        const user = await signInWithGoogle();
+        if (user) {
+        router.push("/dashboard");
+        } else {
+             toast({
+                variant: "destructive",
+                title: "Erro de Autenticação",
+                description: "Não foi possível se cadastrar com o Google. Tente novamente.",
+            });
+        }
+    };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary py-12">
       <Card className="mx-auto max-w-sm w-full">
@@ -58,7 +77,7 @@ export default function RegisterPage() {
             <Button type="submit" className="w-full">
               Criar Conta
             </Button>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" onClick={handleGoogleRegister}>
                <GoogleIcon className="mr-2 h-4 w-4" />
               Cadastrar com Google
             </Button>
