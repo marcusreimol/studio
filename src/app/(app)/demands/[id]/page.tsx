@@ -2,15 +2,13 @@
 "use client";
 
 import { useState } from "react";
-import { notFound } from "next/navigation";
+import { useParams, notFound } from "next/navigation";
 import { demands } from "@/lib/data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ChevronLeft, AlertTriangle, MessageSquare, Tag, Hand, Send, Star, UserCheck } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ChevronLeft, AlertTriangle, Hand, Send, Star, UserCheck } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +18,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { useDocumentData } from 'react-firebase-hooks/firestore';
 import { auth, db } from '@/lib/firebase';
 import { doc } from 'firebase/firestore';
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Proposal = {
   id: string;
@@ -28,23 +27,19 @@ type Proposal = {
   providerReputation: number;
 };
 
-export default function DemandDetailPage({ params }: { params: { id: string } }) {
-  const demand = demands.find((d) => d.id === params.id);
+export default function DemandDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
+  const demand = demands.find((d) => d.id === id);
   const { toast } = useToast();
 
   const [user] = useAuthState(auth);
   const userDocRef = user ? doc(db, "users", user.uid) : null;
-  const [profile] = useDocumentData(userDocRef);
+  const [profile, loadingProfile] = useDocumentData(userDocRef);
 
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [proposalMessage, setProposalMessage] = useState("");
   const [proposalValue, setProposalValue] = useState("");
-
-  if (!demand) {
-    notFound();
-  }
-  
-  const isProvider = profile?.userType === 'prestador';
 
   const handleProposalSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -64,6 +59,37 @@ export default function DemandDetailPage({ params }: { params: { id: string } })
         description: "Sua proposta foi enviada anonimamente para o síndico. Você será notificado se for selecionado.",
     });
   }
+
+  if (loadingProfile) {
+      return (
+          <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-6">
+               <div className="flex items-center gap-4">
+                    <Skeleton className="h-7 w-7 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                        <Skeleton className="h-6 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                    </div>
+                     <Skeleton className="h-6 w-20" />
+               </div>
+                <div className="grid gap-6 md:grid-cols-2">
+                    <Card>
+                        <CardHeader><Skeleton className="h-6 w-40" /></CardHeader>
+                        <CardContent><Skeleton className="h-20 w-full" /></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader><Skeleton className="h-6 w-40" /></CardHeader>
+                        <CardContent><Skeleton className="h-20 w-full" /></CardContent>
+                    </Card>
+                </div>
+          </div>
+      )
+  }
+
+  if (!demand) {
+    notFound();
+  }
+  
+  const isProvider = profile?.userType === 'prestador';
 
   return (
     <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-6">
@@ -207,3 +233,5 @@ export default function DemandDetailPage({ params }: { params: { id: string } })
     </div>
   );
 }
+
+    
