@@ -15,16 +15,18 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { useDocumentData } from 'react-firebase-hooks/firestore';
+import { useDocumentData, useCollectionData } from 'react-firebase-hooks/firestore';
 import { auth, db } from '@/lib/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, collection, addDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { Skeleton } from "@/components/ui/skeleton";
 
 type Proposal = {
-  id: string;
+  id?: string;
   message: string;
   value: number;
   providerReputation: number;
+  createdAt: any;
+  providerId: string;
 };
 
 export default function DemandDetailPage() {
@@ -37,27 +39,49 @@ export default function DemandDetailPage() {
   const userDocRef = user ? doc(db, "users", user.uid) : null;
   const [profile, loadingProfile] = useDocumentData(userDocRef);
 
-  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const proposalsCollectionRef = collection(db, `demands/${id}/proposals`);
+  const proposalsQuery = query(proposalsCollectionRef, orderBy("createdAt", "desc"));
+  const [proposals, loadingProposals] = useCollectionData(proposalsQuery, { idField: 'id' });
+
   const [proposalMessage, setProposalMessage] = useState("");
   const [proposalValue, setProposalValue] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleProposalSubmit = (event: React.FormEvent) => {
+  const handleProposalSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    const newProposal: Proposal = {
-        id: `prop_${Date.now()}`,
-        message: proposalMessage,
-        value: parseFloat(proposalValue),
-        providerReputation: Math.round((4 + Math.random()) * 10) / 10, // Simulate reputation
-    };
+    if (!user) return;
     
-    setProposals(prev => [...prev, newProposal]);
-    setProposalMessage("");
-    setProposalValue("");
+    setIsSubmitting(true);
+    try {
+        const newProposal: Omit<Proposal, 'id' | 'createdAt'> = {
+            message: proposalMessage,
+            value: parseFloat(proposalValue),
+            providerReputation: Math.round((4 + Math.random()) * 10) / 10, // Simulate reputation
+            providerId: user.uid,
+        };
+        
+        await addDoc(proposalsCollectionRef, {
+            ...newProposal,
+            createdAt: serverTimestamp(),
+        });
+        
+        setProposalMessage("");
+        setProposalValue("");
 
-    toast({
-        title: "Proposta Enviada!",
-        description: "Sua proposta foi enviada anonimamente para o síndico. Você será notificado se for selecionado.",
-    });
+        toast({
+            title: "Proposta Enviada!",
+            description: "Sua proposta foi enviada anonimamente para o síndico. Você será notificado se for selecionado.",
+        });
+    } catch (error) {
+        console.error("Error submitting proposal:", error);
+        toast({
+            variant: "destructive",
+            title: "Erro!",
+            description: "Não foi possível enviar sua proposta. Tente novamente.",
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   }
 
   if (loadingProfile) {
@@ -161,6 +185,7 @@ export default function DemandDetailPage() {
                                 required
                                 value={proposalMessage}
                                 onChange={(e) => setProposalMessage(e.target.value)}
+                                disabled={isSubmitting}
                             />
                         </div>
                         <div className="space-y-2">
@@ -173,11 +198,12 @@ export default function DemandDetailPage() {
                                 step="0.01"
                                 value={proposalValue}
                                 onChange={(e) => setProposalValue(e.target.value)}
+                                disabled={isSubmitting}
                             />
                         </div>
-                        <Button type="submit" className="w-full md:w-auto">
+                        <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
                            <Send className="mr-2 h-4 w-4" />
-                            Enviar Proposta
+                            {isSubmitting ? "Enviando..." : "Enviar Proposta"}
                         </Button>
                     </form>
                 </CardContent>
@@ -193,15 +219,17 @@ export default function DemandDetailPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {proposals.length > 0 ? (
+                    {loadingProposals ? (
+                         <div className="text-center text-muted-foreground p-8">Carregando propostas...</div>
+                    ) : proposals && proposals.length > 0 ? (
                         <div className="space-y-4">
-                            {proposals.map((proposal) => (
+                            {(proposals as Proposal[]).map((proposal) => (
                                 <Card key={proposal.id} className="bg-secondary/50">
                                     <CardHeader>
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <CardTitle className="text-xl">
-                                                    R$ {proposal.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    R$ {(proposal.value as number).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </CardTitle>
                                                 <div className="flex items-center gap-1 text-sm text-amber-600 font-semibold mt-1">
                                                     <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
@@ -233,5 +261,3 @@ export default function DemandDetailPage() {
     </div>
   );
 }
-
-    

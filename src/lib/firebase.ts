@@ -10,7 +10,7 @@ import {
     signInWithEmailAndPassword,
     signOut,
 } from "firebase/auth";
-import { getFirestore, doc, setDoc, updateDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -82,8 +82,14 @@ export {
     signInWithEmailAndPassword, 
     signOut, 
     doc, 
+    setDoc,
     updateDoc,
     ref,
     uploadBytes,
-    getDownloadURL 
+    getDownloadURL,
+    collection,
+    addDoc,
+    serverTimestamp,
+    query,
+    orderBy,
 };
