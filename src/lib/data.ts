@@ -58,65 +58,6 @@ export const demands: Demand[] = [
   },
 ];
 
-export type CampaignSupporter = {
-    id: string;
-    name: string;
-    amount: number;
-    logo: string;
-}
-
-export type Campaign = {
-  id: string;
-  title: string;
-  description: string;
-  goal: number;
-  current: number;
-  image: string;
-  sponsor: string;
-  supporters: CampaignSupporter[];
-};
-
-export const campaigns: Campaign[] = [
-  {
-    id: 'c1',
-    title: 'Horta Comunitária no Terraço',
-    description: 'Vamos transformar o terraço do Bloco 2 em uma horta comunitária! O valor arrecadado será usado para comprar terra, sementes e ferramentas.',
-    goal: 1500,
-    current: 950,
-    image: 'https://placehold.co/600x400.png',
-    sponsor: 'Jardim Feliz Paisagismo',
-    supporters: [
-        { id: 's1', name: 'Jardim Feliz Paisagismo', amount: 500, logo: 'https://placehold.co/40x40.png' },
-        { id: 's2', name: 'Verde Vida Comunitária', amount: 450, logo: 'https://placehold.co/40x40.png' },
-    ]
-  },
-  {
-    id: 'c2',
-    title: 'Coleta Seletiva Inteligente',
-    description: 'Ajude-nos a adquirir lixeiras novas e coloridas para a coleta seletiva e a promover a educação ambiental para todos os moradores.',
-    goal: 3000,
-    current: 2800,
-    image: 'https://placehold.co/600x400.png',
-    sponsor: 'Recicla Tudo SA',
-    supporters: [
-        { id: 's3', name: 'Recicla Tudo SA', amount: 2000, logo: 'https://placehold.co/40x40.png' },
-        { id: 's4', name: 'Condomínio Amigo do Ambiente', amount: 800, logo: 'https://placehold.co/40x40.png' },
-    ]
-  },
-  {
-    id: 'c3',
-    title: 'Brinquedos Novos para o Playground',
-    description: 'Nossos pequenos merecem um parquinho seguro e divertido. Com a sua ajuda, vamos renovar os brinquedos e instalar um piso emborrachado.',
-    goal: 5000,
-    current: 1200,
-    image: 'https://placehold.co/600x400.png',
-    sponsor: 'Apoio Construtora',
-    supporters: [
-        { id: 's5', name: 'Apoio Construtora', amount: 1200, logo: 'https://placehold.co/40x40.png' },
-    ]
-  },
-];
-
 export type Provider = {
     id: string;
     name: string;

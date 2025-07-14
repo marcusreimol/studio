@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,19 +13,59 @@ import Link from "next/link";
 import { Skeleton } from '@/components/ui/skeleton';
 
 type Campaign = {
-    id?: string;
+    id: string;
     title: string;
     description: string;
     goal: number;
     current: number;
     imageUrl: string;
-    sponsor: string; // This might be populated differently later
+    sponsor?: string; 
+};
+
+type EnrichedCampaign = Campaign & {
+    sponsorName?: string;
 };
 
 export default function CampaignsPage() {
     const campaignsCollectionRef = collection(db, 'campaigns');
     const q = query(campaignsCollectionRef, orderBy('createdAt', 'desc'));
-    const [campaigns, loading, error] = useCollectionData(q, { idField: 'id' });
+    const [initialCampaigns, loading, error] = useCollectionData(q, { idField: 'id' });
+    const [campaigns, setCampaigns] = useState<EnrichedCampaign[]>([]);
+    const [isEnriching, setIsEnriching] = useState(true);
+
+    useEffect(() => {
+        if (!initialCampaigns) return;
+
+        const enrichCampaigns = async () => {
+            setIsEnriching(true);
+            const enriched = await Promise.all(
+                (initialCampaigns as Campaign[]).map(async (campaign) => {
+                    const supportersRef = collection(db, `campaigns/${campaign.id}/supporters`);
+                    const q = query(supportersRef, orderBy('amount', 'desc'), limit(1));
+                    const snapshot = await getDocs(q);
+                    
+                    if (snapshot.empty) {
+                        return { ...campaign, sponsorName: 'Nenhum patrocinador' };
+                    }
+
+                    const topSupporter = snapshot.docs[0].data();
+                    const providerDocRef = doc(db, 'users', topSupporter.providerId);
+                    const providerSnap = await getDoc(providerDocRef);
+                    const providerData = providerSnap.data();
+                    const sponsorName = providerData?.companyName || providerData?.fullName || 'Apoiador';
+
+                    return { ...campaign, sponsorName };
+                })
+            );
+            setCampaigns(enriched);
+            setIsEnriching(false);
+        };
+
+        enrichCampaigns();
+    }, [initialCampaigns]);
+
+
+    const showLoadingSkeleton = loading || isEnriching;
 
     return (
         <div>
@@ -35,7 +75,7 @@ export default function CampaignsPage() {
                     <Link href="/campaigns/new">Criar Nova Campanha</Link>
                 </Button>
             </div>
-            {loading ? (
+            {showLoadingSkeleton ? (
                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {[...Array(3)].map((_, i) => (
                         <Card key={i} className="flex flex-col">
@@ -62,7 +102,7 @@ export default function CampaignsPage() {
                 </div>
             ) : campaigns && campaigns.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {(campaigns as Campaign[]).map((campaign) => (
+                    {campaigns.map((campaign) => (
                         <Card key={campaign.id} className="flex flex-col">
                             <CardHeader>
                                 <div className="aspect-video relative mb-4">
@@ -89,7 +129,7 @@ export default function CampaignsPage() {
                                     </div>
                                     <Progress value={((campaign.current || 0) / campaign.goal) * 100} className="h-2" />
                                     <p className="text-xs text-muted-foreground mt-2">
-                                        Apoiado por: <span className="font-semibold text-foreground">{campaign.sponsor || 'Nenhum patrocinador'}</span>
+                                        Apoiado por: <span className="font-semibold text-foreground">{campaign.sponsorName}</span>
                                     </p>
                                 </div>
                             </CardContent>
