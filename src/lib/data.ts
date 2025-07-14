@@ -124,13 +124,17 @@ export type Provider = {
     rating: number;
     location: string;
     logo: string;
+    phone?: string;
+    website?: string;
+    linkedin?: string;
+    facebook?: string;
 };
 
 export const providers: Provider[] = [
-    { id: 'p1', name: 'Hidráulica Rápida', category: 'Hidráulica', rating: 4.8, location: 'Copacabana', logo: 'https://placehold.co/64x64.png' },
-    { id: 'p2', name: 'Eletricista 24h', category: 'Elétrica', rating: 4.9, location: 'Ipanema', logo: 'https://placehold.co/64x64.png' },
-    { id: 'p3', name: 'Pinturas & Cia', category: 'Pintura', rating: 4.7, location: 'Maricá', logo: 'https://placehold.co/64x64.png' },
-    { id: 'p4', name: 'Segurança Total', category: 'Segurança', rating: 5.0, location: 'Leblon', logo: 'https://placehold.co/64x64.png' },
+    { id: 'p1', name: 'Hidráulica Rápida', category: 'Hidráulica', rating: 4.8, location: 'Copacabana', logo: 'https://placehold.co/64x64.png', phone: '(21) 99999-1111', website: 'https://hidraulicarapida.com', linkedin: 'https://linkedin.com/company/hidraulicarapida' },
+    { id: 'p2', name: 'Eletricista 24h', category: 'Elétrica', rating: 4.9, location: 'Ipanema', logo: 'https://placehold.co/64x64.png', phone: '(21) 99999-2222', facebook: 'https://facebook.com/eletricista24h' },
+    { id: 'p3', name: 'Pinturas & Cia', category: 'Pintura', rating: 4.7, location: 'Maricá', logo: 'https://placehold.co/64x64.png', website: 'https://pinturascia.com' },
+    { id: 'p4', name: 'Segurança Total', category: 'Segurança', rating: 5.0, location: 'Leblon', logo: 'https://placehold.co/64x64.png', phone: '(21) 99999-4444' },
     { id: 'p5', name: 'Jardim Feliz Paisagismo', category: 'Jardinagem', rating: 4.9, location: 'Barra da Tijuca', logo: 'https://placehold.co/64x64.png' },
-    { id: 'p6', name: 'Limpeza Brilhante', category: 'Limpeza', rating: 4.6, location: 'Copacabana', logo: 'https://placehold.co/64x64.png' },
+    { id: 'p6', name: 'Limpeza Brilhante', category: 'Limpeza', rating: 4.6, location: 'Copacabana', logo: 'https://placehold.co/64x64.png', facebook: 'https://facebook.com/limpezabrilhante' },
 ];

@@ -1,9 +1,11 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { providers } from "@/lib/data";
 import { Star } from "lucide-react";
+import Link from "next/link";
 
 export default function ProvidersPage() {
   return (
@@ -30,7 +32,9 @@ export default function ProvidersPage() {
                         <span className="font-semibold text-foreground">{provider.rating.toFixed(1)}</span>
                     </div>
                 </div>
-                 <Button className="w-full mt-4">Ver Perfil</Button>
+                 <Button asChild className="w-full mt-4">
+                    <Link href={`/providers/${provider.id}`}>Ver Perfil</Link>
+                 </Button>
             </CardContent>
           </Card>
         ))}
