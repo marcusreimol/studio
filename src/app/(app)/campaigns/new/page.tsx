@@ -42,6 +42,7 @@ export default function NewCampaignPage() {
       title: "",
       description: "",
       goal: 0,
+      image: undefined,
     },
   });
   
@@ -184,7 +185,7 @@ export default function NewCampaignPage() {
                   <FormField
                     control={form.control}
                     name="image"
-                    render={() => ( // Removed 'field' as we use ref and manual change handler
+                    render={() => ( 
                       <FormItem>
                         <FormControl>
                             <div className="flex items-center justify-center w-full">
@@ -243,17 +244,15 @@ export default function NewCampaignPage() {
                     />
                 </CardContent>
               </Card>
-              <Card className="block md:hidden">
-                  <CardHeader>
-                      <CardTitle>Publicação</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                      <Button type="submit" className="w-full" disabled={isSubmitting}>
-                          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                          {isSubmitting ? 'Publicando...' : 'Publicar Campanha'}
-                      </Button>
-                  </CardContent>
-              </Card>
+              <div className="flex items-center gap-2 md:hidden">
+                <Button variant="outline" size="sm" type="button" className="w-full" onClick={() => router.push('/campaigns')}>
+                    Descartar
+                </Button>
+                <Button size="sm" type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isSubmitting ? 'Publicando...' : 'Publicar'}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
