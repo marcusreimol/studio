@@ -3,17 +3,43 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Briefcase, Users, HeartHandshake, Star, FileText, CheckCircle } from "lucide-react";
-import { campaigns } from "@/lib/data";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { useDocumentData } from "react-firebase-hooks/firestore";
+import { useDocumentData, useCollectionData } from "react-firebase-hooks/firestore";
 import { auth, db } from "@/lib/firebase";
-import { doc } from "firebase/firestore";
+import { doc, collection, query, getDocs } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useState } from "react";
 
 export default function AnalyticsPage() {
     const [user] = useAuthState(auth);
     const userDocRef = user ? doc(db, "users", user.uid) : null;
-    const [profile, loading] = useDocumentData(userDocRef);
+    const [profile, loadingProfile] = useDocumentData(userDocRef);
+
+    const [campaigns, loadingCampaigns] = useCollectionData(collection(db, 'campaigns'));
+    const [totalUniqueSupporters, setTotalUniqueSupporters] = useState(0);
+    const [loadingSupporters, setLoadingSupporters] = useState(true);
+
+    useEffect(() => {
+        const fetchSupporters = async () => {
+            if (!campaigns) return;
+            setLoadingSupporters(true);
+            const supporterPromises = campaigns.map(campaign => getDocs(collection(db, `campaigns/${campaign.id}/supporters`)));
+            const supporterSnapshots = await Promise.all(supporterPromises);
+            
+            const allSupporters = new Set<string>();
+            supporterSnapshots.forEach(snapshot => {
+                snapshot.forEach(doc => {
+                    allSupporters.add(doc.data().providerId);
+                });
+            });
+
+            setTotalUniqueSupporters(allSupporters.size);
+            setLoadingSupporters(false);
+        };
+
+        fetchSupporters();
+    }, [campaigns]);
+
 
     // Mock data for provider analytics
     const providerAnalytics = {
@@ -22,15 +48,7 @@ export default function AnalyticsPage() {
         proposalsAccepted: 4,
     };
 
-    // Data for sindico analytics
-    const totalCampaigns = campaigns.length;
-    const allSupporters = new Set();
-    campaigns.forEach(campaign => {
-        campaign.supporters.forEach(supporter => {
-            allSupporters.add(supporter.id);
-        });
-    });
-    const totalUniqueSupporters = allSupporters.size;
+    const loading = loadingProfile || loadingCampaigns || loadingSupporters;
 
     if (loading) {
         return (
@@ -49,6 +67,7 @@ export default function AnalyticsPage() {
     }
 
     const isSindico = profile?.userType === 'sindico';
+    const totalCampaigns = campaigns?.length || 0;
 
     return (
         <div>
