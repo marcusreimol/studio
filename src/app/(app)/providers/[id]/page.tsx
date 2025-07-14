@@ -1,15 +1,98 @@
 
-import { notFound } from "next/navigation";
-import { providers } from "@/lib/data";
+"use client";
+
+import { useEffect, useState } from 'react';
+import { notFound, useParams } from "next/navigation";
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ChevronLeft, Globe, Linkedin, Facebook, Star, Phone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default function ProviderProfilePage({ params }: { params: { id: string } }) {
-  const provider = providers.find((p) => p.id === params.id);
+type ProviderData = {
+  name: string;
+  category: string;
+  rating: number;
+  location: string;
+  logo: string;
+  phone?: string;
+  website?: string;
+  linkedin?: string;
+  facebook?: string;
+};
+
+export default function ProviderProfilePage() {
+  const params = useParams();
+  const id = params.id as string;
+  const [provider, setProvider] = useState<ProviderData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchProvider = async () => {
+      try {
+        const docRef = doc(db, "users", id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists() && docSnap.data().userType === 'prestador') {
+          const data = docSnap.data();
+          setProvider({
+            name: data.companyName || data.fullName || 'Nome não disponível',
+            logo: data.logoUrl || `https://placehold.co/96x96.png`,
+            category: 'Serviços Gerais', // Placeholder
+            rating: 4.5, // Placeholder
+            location: 'Rio de Janeiro', // Placeholder
+            phone: data.phone,
+            website: data.website,
+            linkedin: data.linkedin,
+            facebook: data.facebook,
+          });
+        } else {
+          setProvider(null); // Triggers notFound
+        }
+      } catch (error) {
+        console.error("Error fetching provider data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProvider();
+  }, [id]);
+
+  if (loading) {
+    return (
+        <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-6">
+             <div className="flex items-center gap-4">
+                <Skeleton className="h-7 w-7 rounded" />
+                <Skeleton className="h-6 w-48" />
+            </div>
+             <div className="grid gap-6 md:grid-cols-3">
+                <Card className="md:col-span-1 flex flex-col items-center justify-center text-center p-6">
+                    <Skeleton className="w-24 h-24 rounded-full mb-4" />
+                    <Skeleton className="h-8 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-5 w-20 mt-2" />
+                </Card>
+                 <Card className="md:col-span-2">
+                    <CardHeader>
+                        <Skeleton className="h-7 w-1/2" />
+                        <Skeleton className="h-4 w-3/4" />
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <Skeleton className="h-5 w-full" />
+                        <Skeleton className="h-5 w-full" />
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    );
+  }
 
   if (!provider) {
     notFound();
