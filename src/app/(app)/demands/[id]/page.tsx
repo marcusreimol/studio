@@ -1,13 +1,14 @@
 
 "use client";
 
+import { useState } from "react";
 import { notFound } from "next/navigation";
 import { demands } from "@/lib/data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ChevronLeft, AlertTriangle, MessageSquare, Tag, Hand, Send } from "lucide-react";
+import { ChevronLeft, AlertTriangle, MessageSquare, Tag, Hand, Send, Star, UserCheck } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +21,12 @@ import { useDocumentData } from 'react-firebase-hooks/firestore';
 import { auth, db } from '@/lib/firebase';
 import { doc } from 'firebase/firestore';
 
+type Proposal = {
+  id: string;
+  message: string;
+  value: number;
+  providerReputation: number;
+};
 
 export default function DemandDetailPage({ params }: { params: { id: string } }) {
   const demand = demands.find((d) => d.id === params.id);
@@ -29,6 +36,10 @@ export default function DemandDetailPage({ params }: { params: { id: string } })
   const userDocRef = user ? doc(db, "users", user.uid) : null;
   const [profile] = useDocumentData(userDocRef);
 
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [proposalMessage, setProposalMessage] = useState("");
+  const [proposalValue, setProposalValue] = useState("");
+
   if (!demand) {
     notFound();
   }
@@ -37,6 +48,17 @@ export default function DemandDetailPage({ params }: { params: { id: string } })
 
   const handleProposalSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+    const newProposal: Proposal = {
+        id: `prop_${Date.now()}`,
+        message: proposalMessage,
+        value: parseFloat(proposalValue),
+        providerReputation: Math.round((4 + Math.random()) * 10) / 10, // Simulate reputation
+    };
+    
+    setProposals(prev => [...prev, newProposal]);
+    setProposalMessage("");
+    setProposalValue("");
+
     toast({
         title: "Proposta Enviada!",
         description: "Sua proposta foi enviada anonimamente para o síndico. Você será notificado se for selecionado.",
@@ -111,6 +133,8 @@ export default function DemandDetailPage({ params }: { params: { id: string } })
                                 placeholder="Descreva como você resolverá o problema, materiais que serão usados, prazos, etc."
                                 className="min-h-32"
                                 required
+                                value={proposalMessage}
+                                onChange={(e) => setProposalMessage(e.target.value)}
                             />
                         </div>
                         <div className="space-y-2">
@@ -121,6 +145,8 @@ export default function DemandDetailPage({ params }: { params: { id: string } })
                                 placeholder="Ex: 550.00"
                                 required
                                 step="0.01"
+                                value={proposalValue}
+                                onChange={(e) => setProposalValue(e.target.value)}
                             />
                         </div>
                         <Button type="submit" className="w-full md:w-auto">
@@ -141,11 +167,40 @@ export default function DemandDetailPage({ params }: { params: { id: string } })
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-center text-muted-foreground p-8">
-                        <Hand className="mx-auto h-12 w-12 mb-4" />
-                        <p className="font-semibold">Nenhuma proposta recebida ainda.</p>
-                        <p className="text-sm">Fornecedores qualificados foram notificados e em breve enviarão suas cotações.</p>
-                    </div>
+                    {proposals.length > 0 ? (
+                        <div className="space-y-4">
+                            {proposals.map((proposal) => (
+                                <Card key={proposal.id} className="bg-secondary/50">
+                                    <CardHeader>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <CardTitle className="text-xl">
+                                                    R$ {proposal.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </CardTitle>
+                                                <div className="flex items-center gap-1 text-sm text-amber-600 font-semibold mt-1">
+                                                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                                                    <span>{proposal.providerReputation.toFixed(1)} de Reputação</span>
+                                                </div>
+                                            </div>
+                                            <Button size="sm">
+                                                <UserCheck className="mr-2 h-4 w-4" />
+                                                Contratar
+                                            </Button>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-muted-foreground">{proposal.message}</p>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center text-muted-foreground p-8">
+                            <Hand className="mx-auto h-12 w-12 mb-4" />
+                            <p className="font-semibold">Nenhuma proposta recebida ainda.</p>
+                            <p className="text-sm">Fornecedores qualificados foram notificados e em breve enviarão suas cotações.</p>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         )}
