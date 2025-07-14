@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -214,7 +215,7 @@ export default function NewDemandPage() {
                                 <SelectItem value="pintura">Pintura</SelectItem>
                                 <SelectItem value="limpeza">Limpeza</SelectItem>
                                 <SelectItem value="jardinagem">Jardinagem</SelectItem>
-                                <SelectItem value="outros">Outros</osutros>
+                                <SelectItem value="outros">Outros</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />
