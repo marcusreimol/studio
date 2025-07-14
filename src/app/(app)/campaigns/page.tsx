@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { collection, query, orderBy, getDocs, limit } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, limit, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,11 +41,11 @@ export default function CampaignsPage() {
             const enriched = await Promise.all(
                 (initialCampaigns as Campaign[]).map(async (campaign) => {
                     const supportersRef = collection(db, `campaigns/${campaign.id}/supporters`);
-                    const q = query(supportersRef, orderBy('amount', 'desc'), limit(1));
-                    const snapshot = await getDocs(q);
+                    const q_supporters = query(supportersRef, orderBy('amount', 'desc'), limit(1));
+                    const snapshot = await getDocs(q_supporters);
                     
                     if (snapshot.empty) {
-                        return { ...campaign, sponsorName: 'Nenhum patrocinador' };
+                        return { ...campaign, sponsorName: 'Nenhum apoiador' };
                     }
 
                     const topSupporter = snapshot.docs[0].data();
@@ -135,8 +135,8 @@ export default function CampaignsPage() {
                             </CardContent>
                             <CardFooter>
                                 <Button asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-                                    <Link href={`/campaigns/${campaign.id}/supporters`}>
-                                        Ver Apoiadores
+                                    <Link href={`/campaigns/${campaign.id}`}>
+                                        Ver Detalhes
                                     </Link>
                                 </Button>
                             </CardFooter>
