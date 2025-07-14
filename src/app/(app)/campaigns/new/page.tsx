@@ -1,11 +1,14 @@
 
 "use client";
 
+import { useState, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { ChevronLeft, Upload } from "lucide-react";
+import { ChevronLeft, Upload, Loader2, Image as ImageIcon } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,18 +16,25 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { auth, db, storage, collection, addDoc, serverTimestamp, ref, uploadBytes, getDownloadURL } from "@/lib/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
 
 const campaignFormSchema = z.object({
   title: z.string().min(10, { message: "O título deve ter pelo menos 10 caracteres." }),
   description: z.string().min(30, { message: "A descrição deve ter pelo menos 30 caracteres." }),
   goal: z.coerce.number().min(1, { message: "A meta deve ser de pelo menos R$ 1,00." }),
-  image: z.any().optional(),
+  image: z.instanceof(File).refine(file => file.size > 0, 'Por favor, envie uma imagem.'),
 });
 
 type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 
 export default function NewCampaignPage() {
   const { toast } = useToast();
+  const router = useRouter();
+  const [user] = useAuthState(auth);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<CampaignFormValues>({
     resolver: zodResolver(campaignFormSchema),
@@ -34,13 +44,63 @@ export default function NewCampaignPage() {
       goal: 0,
     },
   });
+  
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      form.setValue('image', file, { shouldValidate: true });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-  function onSubmit(data: CampaignFormValues) {
-    console.log(data);
-    toast({
-      title: "Campanha Criada!",
-      description: "Sua campanha foi criada com sucesso e já está visível para todos.",
-    });
+  async function onSubmit(data: CampaignFormValues) {
+    if (!user) {
+      toast({ variant: "destructive", title: "Erro", description: "Você precisa estar logado para criar uma campanha." });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // 1. Upload image to Firebase Storage
+      const imageFile = data.image;
+      const storageRef = ref(storage, `campaigns/${user.uid}/${Date.now()}_${imageFile.name}`);
+      const uploadSnapshot = await uploadBytes(storageRef, imageFile);
+      const imageUrl = await getDownloadURL(uploadSnapshot.ref);
+
+      // 2. Save campaign data to Firestore
+      const campaignsCollectionRef = collection(db, 'campaigns');
+      await addDoc(campaignsCollectionRef, {
+        title: data.title,
+        description: data.description,
+        goal: data.goal,
+        imageUrl: imageUrl,
+        current: 0, // Initial amount
+        creatorId: user.uid,
+        creatorName: user.displayName || 'Anônimo',
+        createdAt: serverTimestamp(),
+      });
+
+      toast({
+        title: "Campanha Criada!",
+        description: "Sua campanha foi publicada com sucesso e já está visível para todos.",
+      });
+
+      router.push("/campaigns");
+
+    } catch (error) {
+      console.error("Error creating campaign:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao Criar Campanha",
+        description: "Não foi possível criar sua campanha. Tente novamente.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -56,10 +116,13 @@ export default function NewCampaignPage() {
           Nova Campanha de Arrecadação
         </h1>
         <div className="hidden items-center gap-2 md:ml-auto md:flex">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => router.push('/campaigns')}>
             Descartar
           </Button>
-          <Button size="sm" onClick={form.handleSubmit(onSubmit)}>Publicar Campanha</Button>
+          <Button size="sm" onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting}>
+             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isSubmitting ? 'Publicando...' : 'Publicar Campanha'}
+          </Button>
         </div>
       </div>
       <Form {...form}>
@@ -81,7 +144,7 @@ export default function NewCampaignPage() {
                       <FormItem>
                         <FormLabel>Título da Campanha</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ex: Horta Comunitária no Terraço" {...field} />
+                          <Input placeholder="Ex: Horta Comunitária no Terraço" {...field} disabled={isSubmitting} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -99,6 +162,7 @@ export default function NewCampaignPage() {
                             placeholder="Descreva o objetivo da campanha, onde os fundos serão usados, etc."
                             className="min-h-32"
                             {...field}
+                            disabled={isSubmitting}
                           />
                         </FormControl>
                         <FormMessage />
@@ -116,21 +180,44 @@ export default function NewCampaignPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-center w-full">
-                    <Label
-                        htmlFor="dropzone-file"
-                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-secondary"
-                    >
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                            <p className="mb-2 text-sm text-muted-foreground">
-                                <span className="font-semibold">Clique para enviar</span> ou arraste e solte
-                            </p>
-                            <p className="text-xs text-muted-foreground">PNG ou JPG</p>
-                        </div>
-                        <Input id="dropzone-file" type="file" className="hidden" />
-                    </Label>
-                </div>
+                <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field }) => (
+                    <FormItem>
+                       <FormControl>
+                          <div className="flex items-center justify-center w-full">
+                              <Label
+                                  htmlFor="dropzone-file"
+                                  className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-secondary relative"
+                              >
+                                {previewImage ? (
+                                    <img src={previewImage} alt="Preview" className="object-cover w-full h-full rounded-lg" />
+                                ) : (
+                                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                      <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
+                                      <p className="mb-2 text-sm text-muted-foreground">
+                                          <span className="font-semibold">Clique para enviar</span> ou arraste e solte
+                                      </p>
+                                      <p className="text-xs text-muted-foreground">PNG ou JPG</p>
+                                  </div>
+                                )}
+                                  <Input 
+                                      id="dropzone-file" 
+                                      type="file" 
+                                      className="hidden" 
+                                      ref={fileInputRef}
+                                      onChange={handleFileChange}
+                                      accept="image/png, image/jpeg"
+                                      disabled={isSubmitting}
+                                  />
+                              </Label>
+                          </div>
+                       </FormControl>
+                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
           </div>
@@ -147,7 +234,7 @@ export default function NewCampaignPage() {
                       <FormItem>
                         <FormLabel>Meta (R$)</FormLabel>
                         <FormControl>
-                            <Input type="number" placeholder="Ex: 1500.00" {...field} />
+                            <Input type="number" placeholder="Ex: 1500.00" {...field} disabled={isSubmitting}/>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -160,7 +247,10 @@ export default function NewCampaignPage() {
                     <CardTitle>Publicação</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Button type="submit" className="w-full">Publicar Campanha</Button>
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                         {isSubmitting ? 'Publicando...' : 'Publicar Campanha'}
+                    </Button>
                 </CardContent>
             </Card>
           </div>
