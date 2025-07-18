@@ -35,27 +35,26 @@ export default function DemandsPage() {
   const [user, loadingUser] = useAuthState(auth);
   const userDocRef = user ? doc(db, "users", user.uid) : null;
   const [profile, loadingProfile] = useDocumentData(userDocRef);
+  const [demandsQuery, setDemandsQuery] = useState<Query | null>(null);
 
-  // useMemo will re-calculate the query only when dependencies change.
-  // This is safer and prevents re-renders with invalid queries.
-  const demandsQuery = useMemo(() => {
-    if (!user || !profile) {
-      // Return a basic query if user/profile is not loaded to avoid hook errors,
-      // but we will gate rendering on loading state anyway.
-      return query(collection(db, 'demands'), orderBy('createdAt', 'desc'));
+  useEffect(() => {
+    if (loadingUser || loadingProfile) return;
+
+    if (user && profile) {
+      if (profile.userType === 'sindico') {
+        setDemandsQuery(query(collection(db, 'demands'), where('authorId', '==', user.uid), orderBy('createdAt', 'desc')));
+      } else {
+        setDemandsQuery(query(collection(db, 'demands'), orderBy('createdAt', 'desc')));
+      }
+    } else {
+      // If no user, show all demands (or handle as a public view)
+      setDemandsQuery(query(collection(db, 'demands'), orderBy('createdAt', 'desc')));
     }
-    
-    if (profile.userType === 'sindico') {
-      return query(collection(db, 'demands'), where('authorId', '==', user.uid), orderBy('createdAt', 'desc'));
-    }
-    
-    // For providers or other user types, show all demands.
-    return query(collection(db, 'demands'), orderBy('createdAt', 'desc'));
-  }, [user, profile]);
+  }, [user, profile, loadingUser, loadingProfile]);
 
-  const [demands, loadingDemands, error] = useCollectionData(demandsQuery, { idField: 'id' });
+  const [demands, loadingDemands, error] = useCollectionData(demandsQuery as Query, { idField: 'id' });
 
-  const loading = loadingUser || loadingProfile || loadingDemands;
+  const loading = loadingUser || loadingProfile || loadingDemands || !demandsQuery;
 
   const formatDate = (timestamp: Demand['createdAt']) => {
     if (!timestamp) return 'Data indisponível';

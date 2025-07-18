@@ -1,9 +1,8 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, notFound } from "next/navigation";
-import { demands } from "@/lib/data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,8 +16,18 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useDocumentData, useCollectionData } from 'react-firebase-hooks/firestore';
 import { auth, db } from '@/lib/firebase';
-import { doc, collection, addDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { doc, collection, addDoc, serverTimestamp, query, orderBy, getDoc } from 'firebase/firestore';
 import { Skeleton } from "@/components/ui/skeleton";
+
+type Demand = {
+  id: string;
+  title: string;
+  category: string;
+  location: string;
+  author: string;
+  description: string;
+  safetyConcerns: string[];
+};
 
 type Proposal = {
   id?: string;
@@ -30,25 +39,51 @@ type Proposal = {
 };
 
 export default function DemandDetailPage() {
-  const { id } = useParams();
-  const demand = demands.find((d) => d.id === id);
+  const params = useParams();
+  const id = params.id as string;
   const { toast } = useToast();
 
-  const [user] = useAuthState(auth);
+  const [user, loadingUser] = useAuthState(auth);
   const userDocRef = user ? doc(db, "users", user.uid) : null;
   const [profile, loadingProfile] = useDocumentData(userDocRef);
 
+  const [demand, setDemand] = useState<Demand | null>(null);
+  const [loadingDemand, setLoadingDemand] = useState(true);
+
   const proposalsCollectionRef = collection(db, `demands/${id}/proposals`);
   const proposalsQuery = query(proposalsCollectionRef, orderBy("createdAt", "desc"));
-  const [proposals, loadingProposals] = useCollectionData(proposalsQuery, { idField: 'id' });
+  const [proposals, loadingProposals, proposalsError] = useCollectionData(proposalsQuery, { idField: 'id' });
 
   const [proposalMessage, setProposalMessage] = useState("");
   const [proposalValue, setProposalValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  useEffect(() => {
+    const fetchDemand = async () => {
+        if (!id) return;
+        setLoadingDemand(true);
+        try {
+            const demandDocRef = doc(db, 'demands', id);
+            const demandSnap = await getDoc(demandDocRef);
+
+            if (demandSnap.exists()) {
+                setDemand({ id: demandSnap.id, ...demandSnap.data() } as Demand);
+            } else {
+                setDemand(null);
+            }
+        } catch (error) {
+            console.error("Error fetching demand data:", error);
+            setDemand(null);
+        } finally {
+            setLoadingDemand(false);
+        }
+    };
+    fetchDemand();
+  }, [id]);
 
   const handleProposalSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!user) return;
+    if (!user || !id) return;
     
     setIsSubmitting(true);
     try {
@@ -83,7 +118,9 @@ export default function DemandDetailPage() {
     }
   }
 
-  if (loadingProfile) {
+  const loading = loadingUser || loadingProfile || loadingDemand;
+
+  if (loading) {
       return (
           <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-6">
                <div className="flex items-center gap-4">
@@ -109,7 +146,7 @@ export default function DemandDetailPage() {
   }
 
   if (!demand) {
-    notFound();
+    return notFound();
   }
   
   const isProvider = profile?.userType === 'prestador';
@@ -152,7 +189,7 @@ export default function DemandDetailPage() {
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {demand.safetyConcerns.length > 0 ? (
+                    {demand.safetyConcerns && demand.safetyConcerns.length > 0 ? (
                         <ul className="list-disc pl-5 text-muted-foreground space-y-1">
                            {demand.safetyConcerns.map((concern, index) => (
                                 <li key={index}>{concern}</li>
