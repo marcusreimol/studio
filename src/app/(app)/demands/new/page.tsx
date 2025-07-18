@@ -94,7 +94,7 @@ export default function NewDemandPage() {
     setIsSubmitting(true);
     try {
       const demandsCollectionRef = collection(db, 'demands');
-      await addDoc(demandsCollectionRef, {
+      const newDemandRef = await addDoc(demandsCollectionRef, {
         title: data.title,
         category: data.category,
         description: data.description,
@@ -108,9 +108,9 @@ export default function NewDemandPage() {
       });
       toast({
         title: "Demanda Publicada!",
-        description: "Sua demanda foi enviada com sucesso e os prestadores serão notificados.",
+        description: "Você será redirecionado para a página de detalhes.",
       });
-      router.push('/demands');
+      router.push(`/demands/${newDemandRef.id}`);
     } catch (error) {
       console.error("Error creating demand:", error);
       toast({
