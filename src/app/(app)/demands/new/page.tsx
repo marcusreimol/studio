@@ -120,172 +120,175 @@ export default function NewDemandPage() {
   }
 
   return (
-    <div className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" className="h-7 w-7" asChild>
-          <Link href="/dashboard">
-            <ChevronLeft className="h-4 w-4" />
-            <span className="sr-only">Voltar</span>
-          </Link>
-        </Button>
-        <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0 font-headline">
-          Nova Demanda de Serviço
-        </h1>
-        <div className="hidden items-center gap-2 md:ml-auto md:flex">
-          <Button variant="outline" size="sm" type="button" onClick={() => router.back()}>
-            Descartar
-          </Button>
-          <Button size="sm" onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || isAnalyzing}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Publicando...' : 'Publicar Demanda'}
-          </Button>
-        </div>
-      </div>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
-          <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Detalhes da Demanda</CardTitle>
-                <CardDescription>
-                  Forneça detalhes claros para que os prestadores possam fazer propostas precisas.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-6">
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Título da Demanda</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ex: Manutenção do portão da garagem" {...field} disabled={isSubmitting} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                         <div className="flex items-center justify-between">
-                            <FormLabel>Descrição Detalhada do Serviço</FormLabel>
-                             <Button type="button" variant="outline" size="sm" onClick={handleAnalyzeDescription} disabled={isAnalyzing || isSubmitting}>
-                                {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <AlertTriangle className="mr-2 h-4 w-4" />}
-                                Analisar Segurança
-                            </Button>
-                         </div>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Descreva o problema ou a necessidade com o máximo de detalhes possível."
-                            className="min-h-32"
-                            {...field}
-                            disabled={isSubmitting}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  {safetyConcerns.length > 0 && (
-                     <Alert variant="destructive">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Pontos de Atenção de Segurança!</AlertTitle>
-                        <AlertDescription>
-                            <ul className="list-disc pl-5 mt-2">
-                                {safetyConcerns.map((concern, index) => (
-                                    <li key={index}>{concern}</li>
-                                ))}
-                            </ul>
-                            <p className="mt-2 text-xs">Esta análise foi gerada por IA e será incluída na sua demanda.</p>
-                        </AlertDescription>
-                    </Alert>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-             <Card>
-              <CardHeader>
-                <CardTitle>Mídia</CardTitle>
-                <CardDescription>
-                  Adicione fotos ou vídeos para ilustrar melhor a sua necessidade.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-2">
-                    <div className="flex items-center justify-center w-full">
-                        <Label
-                            htmlFor="dropzone-file"
-                            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-secondary"
-                        >
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                                <p className="mb-2 text-sm text-muted-foreground">
-                                    <span className="font-semibold">Clique para enviar</span> ou arraste e solte
-                                </p>
-                                <p className="text-xs text-muted-foreground">SVG, PNG, JPG ou MP4</p>
-                            </div>
-                            <Input id="dropzone-file" type="file" className="hidden" multiple disabled={isSubmitting} />
-                        </Label>
-                    </div>
-                </div>
-              </CardContent>
-            </Card>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <div className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4">
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="icon" className="h-7 w-7" asChild>
+              <Link href="/dashboard">
+                <ChevronLeft className="h-4 w-4" />
+                <span className="sr-only">Voltar</span>
+              </Link>
+            </Button>
+            <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0 font-headline">
+              Nova Demanda de Serviço
+            </h1>
+            <div className="hidden items-center gap-2 md:ml-auto md:flex">
+              <Button variant="outline" size="sm" type="button" onClick={() => router.back()}>
+                Descartar
+              </Button>
+              <Button size="sm" type="submit" disabled={isSubmitting || isAnalyzing}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting ? 'Publicando...' : 'Publicar Demanda'}
+              </Button>
+            </div>
           </div>
-          <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Categoria do Serviço</CardTitle>
-              </CardHeader>
-              <CardContent>
-                 <FormField
-                    control={form.control}
-                    name="category"
-                    render={({ field }) => (
-                      <FormItem>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
-                            <FormControl>
-                                <SelectTrigger>
-                                <SelectValue placeholder="Selecione uma categoria" />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <SelectItem value="hidraulica">Hidráulica</SelectItem>
-                                <SelectItem value="eletrica">Elétrica</SelectItem>
-                                <SelectItem value="seguranca">Segurança</SelectItem>
-                                <SelectItem value="pintura">Pintura</SelectItem>
-                                <SelectItem value="limpeza">Limpeza</SelectItem>
-                                <SelectItem value="jardinagem">Jardinagem</SelectItem>
-                                <SelectItem value="outros">Outros</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-              </CardContent>
-            </Card>
-             <Card>
+          <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
+            <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
+              <Card>
                 <CardHeader>
-                    <CardTitle>Publicação</CardTitle>
-                    <CardDescription>
-                        Sua identidade permanecerá anônima até que você a revele para um prestador.
-                    </CardDescription>
+                  <CardTitle>Detalhes da Demanda</CardTitle>
+                  <CardDescription>
+                    Forneça detalhes claros para que os prestadores possam fazer propostas precisas.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button type="submit" className="w-full" disabled={isSubmitting || isAnalyzing}>
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Publicar Demanda
-                    </Button>
+                  <div className="grid gap-6">
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Título da Demanda</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ex: Manutenção do portão da garagem" {...field} disabled={isSubmitting} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center justify-between">
+                              <FormLabel>Descrição Detalhada do Serviço</FormLabel>
+                              <Button type="button" variant="outline" size="sm" onClick={handleAnalyzeDescription} disabled={isAnalyzing || isSubmitting}>
+                                  {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <AlertTriangle className="mr-2 h-4 w-4" />}
+                                  Analisar Segurança
+                              </Button>
+                          </div>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Descreva o problema ou a necessidade com o máximo de detalhes possível."
+                              className="min-h-32"
+                              {...field}
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {safetyConcerns.length > 0 && (
+                      <Alert variant="destructive">
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertTitle>Pontos de Atenção de Segurança!</AlertTitle>
+                          <AlertDescription>
+                              <ul className="list-disc pl-5 mt-2">
+                                  {safetyConcerns.map((concern, index) => (
+                                      <li key={index}>{concern}</li>
+                                  ))}
+                              </ul>
+                              <p className="mt-2 text-xs">Esta análise foi gerada por IA e será incluída na sua demanda.</p>
+                          </AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
                 </CardContent>
-            </Card>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Mídia</CardTitle>
+                  <CardDescription>
+                    Adicione fotos ou vídeos para ilustrar melhor a sua necessidade.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-2">
+                      <div className="flex items-center justify-center w-full">
+                          <Label
+                              htmlFor="dropzone-file"
+                              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-secondary"
+                          >
+                              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                  <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
+                                  <p className="mb-2 text-sm text-muted-foreground">
+                                      <span className="font-semibold">Clique para enviar</span> ou arraste e solte
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">SVG, PNG, JPG ou MP4</p>
+                              </div>
+                              <Input id="dropzone-file" type="file" className="hidden" multiple disabled={isSubmitting} />
+                          </Label>
+                      </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Categoria do Serviço</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                      control={form.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
+                              <FormControl>
+                                  <SelectTrigger>
+                                  <SelectValue placeholder="Selecione uma categoria" />
+                                  </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                  <SelectItem value="hidraulica">Hidráulica</SelectItem>
+                                  <SelectItem value="eletrica">Elétrica</SelectItem>
+                                  <SelectItem value="seguranca">Segurança</SelectItem>
+                                  <SelectItem value="pintura">Pintura</SelectItem>
+                                  <SelectItem value="limpeza">Limpeza</SelectItem>
+                                  <SelectItem value="jardinagem">Jardinagem</SelectItem>
+                                  <SelectItem value="outros">Outros</SelectItem>
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                </CardContent>
+              </Card>
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Publicação</CardTitle>
+                      <CardDescription>
+                          Sua identidade permanecerá anônima até que você a revele para um prestador.
+                      </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <Button type="submit" className="w-full" disabled={isSubmitting || isAnalyzing}>
+                          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Publicar Demanda
+                      </Button>
+                  </CardContent>
+              </Card>
+            </div>
           </div>
-        </form>
-      </Form>
-    </div>
+        </div>
+      </form>
+    </Form>
   );
-}
+
+    
