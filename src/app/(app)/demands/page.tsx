@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { collection, query, where, orderBy, doc, Query } from '@/lib/firebase';
+import { collection, query, where, orderBy, Query } from '@/lib/firebase';
 import { auth, db } from '@/lib/firebase';
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
@@ -76,23 +76,28 @@ export default function DemandsPage() {
         <h1 className="text-2xl font-semibold md:text-3xl font-headline">
           {loading ? <Skeleton className="h-8 w-48" /> : getCardTitle()}
         </h1>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              {categories[filter]}
-              <ChevronDown className="ml-2 h-4 w-4" />
+        <div className="flex items-center gap-2">
+            <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                {categories[filter]}
+                <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+                <DropdownMenuLabel>Filtrar por Categoria</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup value={filter} onValueChange={(value) => setFilter(value as CategoryKey)}>
+                {Object.entries(categories).map(([key, value]) => (
+                    <DropdownMenuRadioItem key={key} value={key}>{value}</DropdownMenuRadioItem>
+                ))}
+                </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+            </DropdownMenu>
+            <Button asChild>
+              <Link href="/demands/new">Publicar Demanda</Link>
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuLabel>Filtrar por Categoria</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuRadioGroup value={filter} onValueChange={(value) => setFilter(value as CategoryKey)}>
-              {Object.entries(categories).map(([key, value]) => (
-                <DropdownMenuRadioItem key={key} value={key}>{value}</DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        </div>
       </div>
 
       <Card>

@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams, notFound } from "next/navigation";
+import { useState } from "react";
+import { useParams, notFound, useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,10 +12,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useDocumentData, useCollectionData } from 'react-firebase-hooks/firestore';
-import { auth, db, collection, doc, addDoc, serverTimestamp, query, orderBy, getDoc, updateDoc, increment } from "@/lib/firebase";
+import { auth, db, collection, doc, addDoc, serverTimestamp, query, orderBy, updateDoc, increment } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type Demand = {
@@ -37,6 +38,7 @@ type Proposal = {
   createdAt: any;
   providerId: string;
   providerName: string;
+  providerLogo?: string;
 };
 
 export default function DemandDetailPage() {
@@ -49,11 +51,11 @@ export default function DemandDetailPage() {
   const [profile, loadingProfile] = useDocumentData(userDocRef);
 
   const demandDocRef = id ? doc(db, 'demands', id) : null;
-  const [demand, loadingDemand] = useDocumentData(demandDocRef, { idField: 'id'});
+  const [demand, loadingDemand, demandError] = useDocumentData(demandDocRef, { idField: 'id'});
 
   const proposalsCollectionRef = id ? collection(db, `demands/${id}/proposals`) : null;
   const proposalsQuery = proposalsCollectionRef ? query(proposalsCollectionRef, orderBy("createdAt", "desc")) : null;
-  const [proposals, loadingProposals] = useCollectionData(proposalsQuery, { idField: 'id' });
+  const [proposals, loadingProposals, proposalsError] = useCollectionData(proposalsQuery, { idField: 'id' });
 
   const [proposalMessage, setProposalMessage] = useState("");
   const [proposalValue, setProposalValue] = useState("");
@@ -71,7 +73,7 @@ export default function DemandDetailPage() {
             providerReputation: (profile?.rating || 4.5), // Use profile rating or a default
             providerId: user.uid,
             providerName: profile?.companyName || profile?.fullName,
-            providerLogo: profile?.logoUrl,
+            providerLogo: profile?.logoUrl || null,
             createdAt: serverTimestamp(),
         });
         
@@ -125,8 +127,8 @@ export default function DemandDetailPage() {
           </div>
       )
   }
-
-  if (!demand) {
+  
+  if (!demand || demandError) {
     return notFound();
   }
   
@@ -183,67 +185,71 @@ export default function DemandDetailPage() {
             </Card>
         </div>
         
-        {!isDemandCreator && (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Enviar Cotação</CardTitle>
-                    <CardDescription>
-                        Sua proposta será enviada para o responsável pela demanda.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleProposalSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="proposal-message">Sua Proposta</Label>
-                             <Textarea
-                                id="proposal-message"
-                                placeholder="Descreva como você resolverá o problema, materiais que serão usados, prazos, etc."
-                                className="min-h-32"
-                                required
-                                value={proposalMessage}
-                                onChange={(e) => setProposalMessage(e.target.value)}
-                                disabled={isSubmitting}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="proposal-value">Valor da Proposta (R$)</Label>
-                            <Input
-                                id="proposal-value"
-                                type="number"
-                                placeholder="Ex: 550.00"
-                                required
-                                step="0.01"
-                                value={proposalValue}
-                                onChange={(e) => setProposalValue(e.target.value)}
-                                disabled={isSubmitting}
-                            />
-                        </div>
-                        <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
-                           {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                            {isSubmitting ? "Enviando..." : "Enviar Proposta"}
-                        </Button>
-                    </form>
-                </CardContent>
-            </Card>
-        )}
         
-        {isDemandCreator && (
-             <Card>
-                <CardHeader>
-                    <CardTitle>Propostas Recebidas</CardTitle>
-                    <CardDescription>
-                        Abaixo estão as cotações recebidas para esta demanda.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {loadingProposals ? (
-                         <div className="text-center text-muted-foreground p-8">Carregando propostas...</div>
-                    ) : proposals && proposals.length > 0 ? (
-                        <div className="space-y-4">
-                            {(proposals as Proposal[]).map((proposal) => (
-                                <Card key={proposal.id} className="bg-secondary/50">
-                                    <CardHeader>
-                                        <div className="flex justify-between items-start">
+        <Card>
+            <CardHeader>
+                <CardTitle>Enviar Cotação</CardTitle>
+                <CardDescription>
+                    Sua proposta será enviada para o responsável pela demanda.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleProposalSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="proposal-message">Sua Proposta</Label>
+                            <Textarea
+                            id="proposal-message"
+                            placeholder="Descreva como você resolverá o problema, materiais que serão usados, prazos, etc."
+                            className="min-h-32"
+                            required
+                            value={proposalMessage}
+                            onChange={(e) => setProposalMessage(e.target.value)}
+                            disabled={isSubmitting}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="proposal-value">Valor da Proposta (R$)</Label>
+                        <Input
+                            id="proposal-value"
+                            type="number"
+                            placeholder="Ex: 550.00"
+                            required
+                            step="0.01"
+                            value={proposalValue}
+                            onChange={(e) => setProposalValue(e.target.value)}
+                            disabled={isSubmitting}
+                        />
+                    </div>
+                    <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                        {isSubmitting ? "Enviando..." : "Enviar Proposta"}
+                    </Button>
+                </form>
+            </CardContent>
+        </Card>
+        
+        
+        <Card>
+            <CardHeader>
+                <CardTitle>Propostas Recebidas</CardTitle>
+                <CardDescription>
+                    Abaixo estão as cotações recebidas para esta demanda.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {loadingProposals ? (
+                        <div className="text-center text-muted-foreground p-8">Carregando propostas...</div>
+                ) : proposals && proposals.length > 0 ? (
+                    <div className="space-y-4">
+                        {(proposals as Proposal[]).map((proposal) => (
+                            <Card key={proposal.id} className="bg-secondary/50">
+                                <CardHeader>
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-start gap-4">
+                                            <Avatar>
+                                                <AvatarImage src={proposal.providerLogo} />
+                                                <AvatarFallback>{proposal.providerName?.charAt(0) || 'P'}</AvatarFallback>
+                                            </Avatar>
                                             <div>
                                                 <CardTitle className="text-xl">
                                                     R$ {(proposal.value as number).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -256,28 +262,30 @@ export default function DemandDetailPage() {
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div>
+                                        {isDemandCreator && (
                                             <Button size="sm">
                                                 <UserCheck className="mr-2 h-4 w-4" />
                                                 Contratar
                                             </Button>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-muted-foreground">{proposal.message}</p>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center text-muted-foreground p-8">
-                            <Hand className="mx-auto h-12 w-12 mb-4" />
-                            <p className="font-semibold">Nenhuma proposta recebida ainda.</p>
-                            <p className="text-sm">Fornecedores qualificados foram notificados e em breve enviarão suas cotações.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-        )}
+                                        )}
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-muted-foreground">{proposal.message}</p>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center text-muted-foreground p-8">
+                        <Hand className="mx-auto h-12 w-12 mb-4" />
+                        <p className="font-semibold">Nenhuma proposta recebida ainda.</p>
+                        <p className="text-sm">Fornecedores qualificados foram notificados e em breve enviarão suas cotações.</p>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     </div>
   );
 }
