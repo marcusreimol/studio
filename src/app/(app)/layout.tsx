@@ -58,11 +58,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [user, loading, router]);
 
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) => pathname.startsWith(path) && (path !== '/dashboard' || pathname === '/dashboard');
   
-  const isSindico = profile?.userType === 'sindico';
-  const isProvider = profile?.userType === 'prestador';
-
   if (loading || profileLoading) {
     return (
        <div className="flex items-center justify-center min-h-screen">
@@ -98,27 +95,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenuButton>
             </SidebarMenuItem>
             
-            {isSindico && (
-                <SidebarMenuItem>
-                <SidebarMenuButton href="/demands" isActive={isActive('/demands')} asChild>
-                    <Link href="/demands">
-                        <Briefcase />
-                        <span>Minhas Demandas</span>
-                    </Link>
-                </SidebarMenuButton>
-                </SidebarMenuItem>
-            )}
-
-            {isProvider && (
-                <SidebarMenuItem>
-                <SidebarMenuButton href="/demands" isActive={isActive('/demands')} asChild>
-                    <Link href="/demands">
-                        <Briefcase />
-                        <span>Buscar Demandas</span>
-                    </Link>
-                </SidebarMenuButton>
-                </SidebarMenuItem>
-            )}
+            <SidebarMenuItem>
+              <SidebarMenuButton href="/demands" isActive={isActive('/demands')} asChild>
+                  <Link href="/demands">
+                      <Briefcase />
+                      <span>Demandas</span>
+                  </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
 
             <SidebarMenuItem>
               <SidebarMenuButton href="/campaigns" isActive={isActive('/campaigns')} asChild>
@@ -149,7 +133,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarFooter>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton href="/profile">
+                    <SidebarMenuButton href="/profile" isActive={isActive('/profile')}>
                         <UserCircle />
                         <span>Meu Perfil</span>
                     </SidebarMenuButton>

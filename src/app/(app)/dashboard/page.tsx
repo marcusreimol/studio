@@ -67,19 +67,15 @@ export default function Dashboard() {
     );
   }
 
-  const isSindico = profile?.userType === 'sindico';
-
   return (
     <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold md:text-3xl font-headline">
-              {isSindico ? 'Dashboard do Síndico' : 'Dashboard do Fornecedor'}
+              Dashboard
             </h1>
-             {isSindico && (
-              <Button asChild>
-                  <Link href="/demands/new">Publicar Nova Demanda</Link>
-              </Button>
-            )}
+            <Button asChild>
+                <Link href="/demands/new">Publicar Nova Demanda</Link>
+            </Button>
         </div>
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
@@ -128,10 +124,10 @@ export default function Dashboard() {
           <CardHeader className="flex flex-row items-center">
             <div className="grid gap-2">
               <CardTitle>
-                {isSindico ? 'Minhas Demandas Recentes' : 'Demandas Recentes'}
+                Demandas Recentes
               </CardTitle>
               <CardDescription>
-                {isSindico ? 'Demandas publicadas pelo seu condomínio.' : 'Últimas demandas abertas na plataforma.'}
+                Últimas demandas abertas na plataforma.
               </CardDescription>
             </div>
             <Button asChild size="sm" className="ml-auto gap-1">

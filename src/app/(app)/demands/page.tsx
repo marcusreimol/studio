@@ -45,38 +45,29 @@ type CategoryKey = keyof typeof categories;
 
 export default function DemandsPage() {
   const [user, loadingUser] = useAuthState(auth);
-  const userDocRef = user ? doc(db, "users", user.uid) : null;
-  const [profile, loadingProfile] = useDocumentData(userDocRef);
   
   const [filter, setFilter] = useState<CategoryKey>('all');
   const [demandsQuery, setDemandsQuery] = useState<Query | null>(null);
 
   useEffect(() => {
-    if (loadingUser || loadingProfile || !profile) return;
+    if (loadingUser) return;
 
     const demandsCollection = collection(db, 'demands');
     let q: Query;
 
-    if (profile?.userType === 'sindico' && user) {
-        if (filter === 'all') {
-            q = query(demandsCollection, where('authorId', '==', user.uid), orderBy('createdAt', 'desc'));
-        } else {
-            q = query(demandsCollection, where('authorId', '==', user.uid), where('category', '==', filter), orderBy('createdAt', 'desc'));
-        }
+    if (filter === 'all') {
+        q = query(demandsCollection, orderBy('createdAt', 'desc'));
     } else {
-        if (filter === 'all') {
-            q = query(demandsCollection, orderBy('createdAt', 'desc'));
-        } else {
-            q = query(demandsCollection, where('category', '==', filter), orderBy('createdAt', 'desc'));
-        }
+        q = query(demandsCollection, where('category', '==', filter), orderBy('createdAt', 'desc'));
     }
+    
     setDemandsQuery(q);
 
-  }, [user, profile, loadingUser, loadingProfile, filter]);
+  }, [user, loadingUser, filter]);
 
   const [demands, loadingDemands, error] = useCollectionData(demandsQuery, { idField: 'id' });
 
-  const loading = loadingUser || loadingProfile || !demandsQuery || loadingDemands;
+  const loading = loadingUser || !demandsQuery || loadingDemands;
 
   const formatDate = (timestamp: Demand['createdAt']) => {
     if (!timestamp || !timestamp.seconds) return 'Data indisponível';
@@ -85,17 +76,11 @@ export default function DemandsPage() {
   };
   
   const getCardTitle = () => {
-    if (profile?.userType === 'sindico') {
-      return "Minhas Demandas";
-    }
-    return "Demandas Abertas";
+    return "Demandas de Serviço";
   };
   
   const getCardDescription = () => {
-    if (profile?.userType === 'sindico') {
-      return "Gerencie as demandas que você publicou para o seu condomínio.";
-    }
-    return "Encontre oportunidades de serviço em condomínios.";
+    return "Encontre ou gerencie oportunidades de serviço em condomínios.";
   };
 
   return (

@@ -24,6 +24,7 @@ type Demand = {
   category: string;
   location: string;
   author: string;
+  authorId: string;
   description: string;
   safetyConcerns?: string[];
 };
@@ -35,6 +36,7 @@ type Proposal = {
   providerReputation: number;
   createdAt: any;
   providerId: string;
+  providerName: string;
 };
 
 export default function DemandDetailPage() {
@@ -82,7 +84,7 @@ export default function DemandDetailPage() {
 
         toast({
             title: "Proposta Enviada!",
-            description: "Sua proposta foi enviada anonimamente para o síndico. Você será notificado se for selecionado.",
+            description: "Sua proposta foi enviada para o responsável pela demanda.",
         });
     } catch (error) {
         console.error("Error submitting proposal:", error);
@@ -128,7 +130,7 @@ export default function DemandDetailPage() {
     return notFound();
   }
   
-  const isProvider = profile?.userType === 'prestador';
+  const isDemandCreator = user?.uid === demand.authorId;
 
   return (
     <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-6">
@@ -181,12 +183,12 @@ export default function DemandDetailPage() {
             </Card>
         </div>
         
-        {isProvider && (
+        {!isDemandCreator && (
             <Card>
                 <CardHeader>
-                    <CardTitle>Enviar Cotação Anônima</CardTitle>
+                    <CardTitle>Enviar Cotação</CardTitle>
                     <CardDescription>
-                        Sua identidade permanecerá anônima. O síndico verá apenas sua proposta e sua reputação na plataforma.
+                        Sua proposta será enviada para o responsável pela demanda.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -225,12 +227,12 @@ export default function DemandDetailPage() {
             </Card>
         )}
         
-        {!isProvider && (
+        {isDemandCreator && (
              <Card>
                 <CardHeader>
                     <CardTitle>Propostas Recebidas</CardTitle>
                     <CardDescription>
-                        Abaixo estão as cotações anônimas recebidas para esta demanda.
+                        Abaixo estão as cotações recebidas para esta demanda.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -246,9 +248,12 @@ export default function DemandDetailPage() {
                                                 <CardTitle className="text-xl">
                                                     R$ {(proposal.value as number).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </CardTitle>
-                                                <div className="flex items-center gap-1 text-sm text-amber-600 font-semibold mt-1">
-                                                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
-                                                    <span>{proposal.providerReputation?.toFixed(1) || 'N/A'} de Reputação</span>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-sm font-semibold">{proposal.providerName}</span>
+                                                    <div className="flex items-center gap-1 text-sm text-amber-600 font-semibold">
+                                                        <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                                                        <span>{proposal.providerReputation?.toFixed(1) || 'N/A'}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <Button size="sm">

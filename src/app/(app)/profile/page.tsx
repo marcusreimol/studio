@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Upload, Image as ImageIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
 
 const profileSchema = z.object({
   fullName: z.string().min(3, 'O nome completo é obrigatório.'),
@@ -25,6 +26,8 @@ const profileSchema = z.object({
   linkedin: z.string().url('Por favor, insira uma URL válida.').optional().or(z.literal('')),
   facebook: z.string().url('Por favor, insira uma URL válida.').optional().or(z.literal('')),
   logoUrl: z.string().url().optional(),
+  condominioName: z.string().optional(),
+  about: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -48,6 +51,8 @@ export default function ProfilePage() {
       linkedin: '',
       facebook: '',
       logoUrl: '',
+      condominioName: '',
+      about: '',
     },
   });
 
@@ -61,6 +66,8 @@ export default function ProfilePage() {
         linkedin: profile.linkedin || '',
         facebook: profile.facebook || '',
         logoUrl: profile.logoUrl || '',
+        condominioName: profile.condominioName || '',
+        about: profile.about || '',
       });
     }
   }, [profile, form]);
@@ -148,28 +155,26 @@ export default function ProfilePage() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             {isProvider && (
-              <div className="space-y-4 md:col-span-2">
-                <Label>Logo da Empresa</Label>
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src={logoUrl} alt="Logo da empresa" />
-                    <AvatarFallback><ImageIcon className="h-8 w-8 text-muted-foreground" /></AvatarFallback>
-                  </Avatar>
-                  <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-                    {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                    {logoUrl ? 'Trocar Logo' : 'Enviar Logo'}
-                  </Button>
-                  <Input 
-                    type="file" 
-                    className="hidden" 
-                    ref={fileInputRef} 
-                    onChange={handleLogoUpload}
-                    accept="image/png, image/jpeg, image/gif"
-                  />
-                </div>
+            <div className="space-y-4 md:col-span-2">
+              <Label>Sua Foto ou Logo</Label>
+              <div className="flex items-center gap-4">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={logoUrl} alt="Logo" />
+                  <AvatarFallback><ImageIcon className="h-8 w-8 text-muted-foreground" /></AvatarFallback>
+                </Avatar>
+                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                  {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                  {logoUrl ? 'Trocar Imagem' : 'Enviar Imagem'}
+                </Button>
+                <Input 
+                  type="file" 
+                  className="hidden" 
+                  ref={fileInputRef} 
+                  onChange={handleLogoUpload}
+                  accept="image/png, image/jpeg, image/gif"
+                />
               </div>
-            )}
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="fullName">Nome Completo</Label>
@@ -184,39 +189,46 @@ export default function ProfilePage() {
               <p className="text-xs text-muted-foreground">O e-mail não pode ser alterado.</p>
             </div>
             
-            {isProvider && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="companyName">Nome da Empresa</Label>
-                  <Input id="companyName" {...form.register('companyName')} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone</Label>
-                  <Input id="phone" {...form.register('phone')} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="website">Website</Label>
-                  <Input id="website" {...form.register('website')} />
-                   {form.formState.errors.website && (
-                    <p className="text-sm text-destructive">{form.formState.errors.website.message}</p>
-                    )}
-                </div>
-                 <div className="space-y-2">
-                  <Label htmlFor="linkedin">LinkedIn</Label>
-                  <Input id="linkedin" {...form.register('linkedin')} />
-                  {form.formState.errors.linkedin && (
-                    <p className="text-sm text-destructive">{form.formState.errors.linkedin.message}</p>
-                    )}
-                </div>
-                 <div className="space-y-2">
-                  <Label htmlFor="facebook">Facebook</Label>
-                  <Input id="facebook" {...form.register('facebook')} />
-                  {form.formState.errors.facebook && (
-                    <p className="text-sm text-destructive">{form.formState.errors.facebook.message}</p>
-                    )}
-                </div>
-              </>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="condominioName">Nome do Condomínio (se aplicável)</Label>
+              <Input id="condominioName" {...form.register('condominioName')} placeholder="Ex: Edifício Sol Mar"/>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="companyName">Nome da Empresa (se aplicável)</Label>
+              <Input id="companyName" {...form.register('companyName')} placeholder="Ex: Hidráulica Rápida" />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="about">Sobre Você ou Sua Empresa</Label>
+              <Textarea id="about" {...form.register('about')} placeholder="Descreva seus serviços, sua experiência como síndico, etc." />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telefone</Label>
+              <Input id="phone" {...form.register('phone')} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="website">Website</Label>
+              <Input id="website" {...form.register('website')} />
+                {form.formState.errors.website && (
+                <p className="text-sm text-destructive">{form.formState.errors.website.message}</p>
+                )}
+            </div>
+              <div className="space-y-2">
+              <Label htmlFor="linkedin">LinkedIn</Label>
+              <Input id="linkedin" {...form.register('linkedin')} />
+              {form.formState.errors.linkedin && (
+                <p className="text-sm text-destructive">{form.formState.errors.linkedin.message}</p>
+                )}
+            </div>
+              <div className="space-y-2">
+              <Label htmlFor="facebook">Facebook</Label>
+              <Input id="facebook" {...form.register('facebook')} />
+              {form.formState.errors.facebook && (
+                <p className="text-sm text-destructive">{form.formState.errors.facebook.message}</p>
+                )}
+            </div>
           </div>
           
           <Button type="submit" disabled={form.formState.isSubmitting || !form.formState.isDirty}>
