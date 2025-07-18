@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollectionData, useDocumentData } from 'react-firebase-hooks/firestore';
-import { collection, query, where, orderBy, doc } from 'firebase/firestore';
+import { collection, query, where, orderBy, doc, Query } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { File, ListFilter } from "lucide-react";
 import Link from "next/link";
@@ -36,19 +36,22 @@ export default function DemandsPage() {
   const userDocRef = user ? doc(db, "users", user.uid) : null;
   const [profile, loadingProfile] = useDocumentData(userDocRef);
 
-  const [demandsQuery, setDemandsQuery] = useState<any>(null);
-
-  useEffect(() => {
-    if (loadingUser || loadingProfile) return;
-
-    let q;
-    if (profile?.userType === 'sindico' && user) {
-      q = query(collection(db, 'demands'), where('authorId', '==', user.uid), orderBy('createdAt', 'desc'));
-    } else {
-      q = query(collection(db, 'demands'), orderBy('createdAt', 'desc'));
+  // useMemo will re-calculate the query only when dependencies change.
+  // This is safer and prevents re-renders with invalid queries.
+  const demandsQuery = useMemo(() => {
+    if (!user || !profile) {
+      // Return a basic query if user/profile is not loaded to avoid hook errors,
+      // but we will gate rendering on loading state anyway.
+      return query(collection(db, 'demands'), orderBy('createdAt', 'desc'));
     }
-    setDemandsQuery(q);
-  }, [user, profile, loadingUser, loadingProfile]);
+    
+    if (profile.userType === 'sindico') {
+      return query(collection(db, 'demands'), where('authorId', '==', user.uid), orderBy('createdAt', 'desc'));
+    }
+    
+    // For providers or other user types, show all demands.
+    return query(collection(db, 'demands'), orderBy('createdAt', 'desc'));
+  }, [user, profile]);
 
   const [demands, loadingDemands, error] = useCollectionData(demandsQuery, { idField: 'id' });
 
@@ -192,5 +195,3 @@ export default function DemandsPage() {
     </Tabs>
   );
 }
-
-    
