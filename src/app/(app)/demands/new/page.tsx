@@ -68,6 +68,10 @@ export default function NewDemandPage() {
     try {
       const result = await analyzeServiceDescription({ description });
       setSafetyConcerns(result.safetyConcerns);
+      toast({
+        title: "Análise Concluída",
+        description: result.safetyConcerns.length > 0 ? "Foram identificados pontos de atenção." : "Nenhum ponto de segurança específico foi identificado.",
+      });
     } catch (error) {
       console.error("AI analysis failed:", error);
        toast({
@@ -134,7 +138,7 @@ export default function NewDemandPage() {
               Nova Demanda de Serviço
             </h1>
             <div className="hidden items-center gap-2 md:ml-auto md:flex">
-              <Button variant="outline" size="sm" type="button" onClick={() => router.back()}>
+              <Button variant="outline" size="sm" type="button" onClick={() => router.push('/demands')}>
                 Descartar
               </Button>
               <Button size="sm" type="submit" disabled={isSubmitting || isAnalyzing}>
@@ -209,33 +213,6 @@ export default function NewDemandPage() {
                   </div>
                 </CardContent>
               </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Mídia</CardTitle>
-                  <CardDescription>
-                    Adicione fotos ou vídeos para ilustrar melhor a sua necessidade.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-2">
-                      <div className="flex items-center justify-center w-full">
-                          <Label
-                              htmlFor="dropzone-file"
-                              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-secondary"
-                          >
-                              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                  <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                                  <p className="mb-2 text-sm text-muted-foreground">
-                                      <span className="font-semibold">Clique para enviar</span> ou arraste e solte
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">SVG, PNG, JPG ou MP4</p>
-                              </div>
-                              <Input id="dropzone-file" type="file" className="hidden" multiple disabled={isSubmitting} />
-                          </Label>
-                      </div>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
             <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
               <Card>
@@ -270,25 +247,18 @@ export default function NewDemandPage() {
                     />
                 </CardContent>
               </Card>
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Publicação</CardTitle>
-                      <CardDescription>
-                          Sua identidade permanecerá anônima até que você a revele para um prestador.
-                      </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <Button type="submit" className="w-full" disabled={isSubmitting || isAnalyzing}>
-                          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                          Publicar Demanda
-                      </Button>
-                  </CardContent>
-              </Card>
+              <div className="flex items-center gap-2 md:hidden">
+                <Button variant="outline" size="sm" type="button" className="w-full" onClick={() => router.push('/demands')}>
+                    Descartar
+                </Button>
+                <Button size="sm" type="submit" className="w-full" disabled={isSubmitting || isAnalyzing}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isSubmitting ? 'Publicando...' : 'Publicar'}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </form>
     </Form>
   );
-
-    

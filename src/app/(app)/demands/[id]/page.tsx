@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ChevronLeft, AlertTriangle, Hand, Send, Star, UserCheck } from "lucide-react";
+import { ChevronLeft, AlertTriangle, Hand, Send, Star, UserCheck, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,8 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useDocumentData, useCollectionData } from 'react-firebase-hooks/firestore';
-import { auth, db } from '@/lib/firebase';
-import { doc, collection, addDoc, serverTimestamp, query, orderBy, getDoc } from 'firebase/firestore';
+import { auth, db, collection, doc, addDoc, serverTimestamp, query, orderBy, getDoc } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type Demand = {
@@ -50,8 +49,8 @@ export default function DemandDetailPage() {
   const [demand, setDemand] = useState<Demand | null>(null);
   const [loadingDemand, setLoadingDemand] = useState(true);
 
-  const proposalsCollectionRef = collection(db, `demands/${id}/proposals`);
-  const proposalsQuery = query(proposalsCollectionRef, orderBy("createdAt", "desc"));
+  const proposalsCollectionRef = id ? collection(db, `demands/${id}/proposals`) : null;
+  const proposalsQuery = proposalsCollectionRef ? query(proposalsCollectionRef, orderBy("createdAt", "desc")) : null;
   const [proposals, loadingProposals, proposalsError] = useCollectionData(proposalsQuery, { idField: 'id' });
 
   const [proposalMessage, setProposalMessage] = useState("");
@@ -78,24 +77,22 @@ export default function DemandDetailPage() {
             setLoadingDemand(false);
         }
     };
-    fetchDemand();
+    if (id) {
+        fetchDemand();
+    }
   }, [id]);
 
   const handleProposalSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!user || !id) return;
+    if (!user || !id || !proposalsCollectionRef) return;
     
     setIsSubmitting(true);
     try {
-        const newProposal: Omit<Proposal, 'id' | 'createdAt'> = {
+        await addDoc(proposalsCollectionRef, {
             message: proposalMessage,
             value: parseFloat(proposalValue),
-            providerReputation: Math.round((4 + Math.random()) * 10) / 10, // Simulate reputation
+            providerReputation: (profile?.rating || 4.5), // Use profile rating or a default
             providerId: user.uid,
-        };
-        
-        await addDoc(proposalsCollectionRef, {
-            ...newProposal,
             createdAt: serverTimestamp(),
         });
         
@@ -124,7 +121,7 @@ export default function DemandDetailPage() {
       return (
           <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-6">
                <div className="flex items-center gap-4">
-                    <Skeleton className="h-7 w-7 rounded-full" />
+                    <Skeleton className="h-7 w-7 rounded-sm" />
                     <div className="flex-1 space-y-2">
                         <Skeleton className="h-6 w-3/4" />
                         <Skeleton className="h-4 w-1/2" />
@@ -238,7 +235,7 @@ export default function DemandDetailPage() {
                             />
                         </div>
                         <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
-                           <Send className="mr-2 h-4 w-4" />
+                           {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                             {isSubmitting ? "Enviando..." : "Enviar Proposta"}
                         </Button>
                     </form>
@@ -269,7 +266,7 @@ export default function DemandDetailPage() {
                                                 </CardTitle>
                                                 <div className="flex items-center gap-1 text-sm text-amber-600 font-semibold mt-1">
                                                     <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
-                                                    <span>{proposal.providerReputation.toFixed(1)} de Reputação</span>
+                                                    <span>{proposal.providerReputation?.toFixed(1) || 'N/A'} de Reputação</span>
                                                 </div>
                                             </div>
                                             <Button size="sm">

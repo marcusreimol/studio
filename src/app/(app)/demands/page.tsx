@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollectionData, useDocumentData } from 'react-firebase-hooks/firestore';
-import { collection, query, where, orderBy, doc, Query } from 'firebase/firestore';
+import { collection, query, where, orderBy, doc, Query as FirestoreQuery } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { File, ListFilter } from "lucide-react";
 import Link from "next/link";
@@ -35,29 +35,31 @@ export default function DemandsPage() {
   const [user, loadingUser] = useAuthState(auth);
   const userDocRef = user ? doc(db, "users", user.uid) : null;
   const [profile, loadingProfile] = useDocumentData(userDocRef);
-  const [demandsQuery, setDemandsQuery] = useState<Query | null>(null);
+  
+  const [demandsQuery, setDemandsQuery] = useState<FirestoreQuery | null>(null);
 
   useEffect(() => {
-    if (loadingUser || loadingProfile) return;
-
-    if (user && profile) {
+    // We need to wait for both user and profile to be loaded before creating a query.
+    if (!loadingUser && !loadingProfile && user && profile) {
       if (profile.userType === 'sindico') {
+        // If sindico, query for their demands
         setDemandsQuery(query(collection(db, 'demands'), where('authorId', '==', user.uid), orderBy('createdAt', 'desc')));
       } else {
+        // If provider, query for all demands
         setDemandsQuery(query(collection(db, 'demands'), orderBy('createdAt', 'desc')));
       }
-    } else {
-      // If no user, show all demands (or handle as a public view)
-      setDemandsQuery(query(collection(db, 'demands'), orderBy('createdAt', 'desc')));
+    } else if (!loadingUser && !user) {
+        // Public view, show all demands
+        setDemandsQuery(query(collection(db, 'demands'), orderBy('createdAt', 'desc')));
     }
   }, [user, profile, loadingUser, loadingProfile]);
 
-  const [demands, loadingDemands, error] = useCollectionData(demandsQuery as Query, { idField: 'id' });
+  const [demands, loadingDemands, error] = useCollectionData(demandsQuery, { idField: 'id' });
 
   const loading = loadingUser || loadingProfile || loadingDemands || !demandsQuery;
 
   const formatDate = (timestamp: Demand['createdAt']) => {
-    if (!timestamp) return 'Data indisponível';
+    if (!timestamp || !timestamp.seconds) return 'Data indisponível';
     const date = new Date(timestamp.seconds * 1000);
     return formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
   };
@@ -104,12 +106,6 @@ export default function DemandsPage() {
               <DropdownMenuCheckboxItem>Data</DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button size="sm" variant="outline" className="h-8 gap-1">
-            <File className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Exportar
-            </span>
-          </Button>
         </div>
       </div>
       <TabsContent value="all">
@@ -149,7 +145,7 @@ export default function DemandsPage() {
                 ) : error ? (
                    <TableRow>
                       <TableCell colSpan={5} className="text-center text-destructive py-8">
-                        Erro ao carregar as demandas.
+                        Erro ao carregar as demandas. Por favor, tente novamente mais tarde.
                       </TableCell>
                     </TableRow>
                 ) : demands && demands.length > 0 ? (
