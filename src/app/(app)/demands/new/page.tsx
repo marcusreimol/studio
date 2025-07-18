@@ -9,7 +9,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -98,7 +97,7 @@ export default function NewDemandPage() {
         safetyConcerns,
         authorId: user.uid,
         author: profile.fullName || 'Síndico Anônimo',
-        location: profile.condominioName || 'Local não definido', // Assuming location comes from profile
+        location: profile.condominioName || 'Local não definido',
         status: 'aberto',
         proposalsCount: 0,
         createdAt: serverTimestamp(),
@@ -290,5 +289,3 @@ export default function NewDemandPage() {
     </div>
   );
 }
-
-    
