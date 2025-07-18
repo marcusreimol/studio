@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { collection, query, orderBy, getDocs, limit, doc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, limit, doc, getDoc } from '@/lib/firebase';
 import { db } from '@/lib/firebase';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,19 +78,21 @@ export default function CampaignsPage() {
             {showLoadingSkeleton ? (
                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {[...Array(3)].map((_, i) => (
-                        <Card key={`skeleton-campaign-${i}`} className="flex flex-col">
-                            <CardHeader>
+                        <Card key={i} className="flex flex-col">
+                            <CardHeader className="p-0">
                                 <div className="aspect-video relative mb-4">
                                     <Skeleton className="h-full w-full rounded-t-lg" />
                                 </div>
-                                <Skeleton className="h-6 w-3/4 mb-2" />
-                                <Skeleton className="h-4 w-full" />
-                                <Skeleton className="h-4 w-2/3" />
+                                <div className="p-6">
+                                  <Skeleton className="h-6 w-3/4 mb-2" />
+                                  <Skeleton className="h-4 w-full" />
+                                  <Skeleton className="h-4 w-2/3 mt-1" />
+                                </div>
                             </CardHeader>
-                            <CardContent className="flex-grow">
+                            <CardContent className="flex-grow p-6 pt-0">
                                 <Skeleton className="h-8 w-full" />
                             </CardContent>
-                            <CardFooter>
+                            <CardFooter className="p-6 pt-0">
                                 <Skeleton className="h-10 w-full" />
                             </CardFooter>
                         </Card>
@@ -104,8 +106,8 @@ export default function CampaignsPage() {
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {campaigns.map((campaign) => (
                         <Card key={campaign.id} className="flex flex-col">
-                            <CardHeader>
-                                <div className="aspect-video relative mb-4">
+                            <CardHeader className="p-0">
+                                <div className="aspect-video relative">
                                 <Image
                                     src={campaign.imageUrl || "https://placehold.co/600x400.png"}
                                     alt={campaign.title}
@@ -114,10 +116,12 @@ export default function CampaignsPage() {
                                     data-ai-hint="sustainable community"
                                 />
                                 </div>
-                                <CardTitle className="font-headline">{campaign.title}</CardTitle>
-                                <CardDescription>{campaign.description}</CardDescription>
+                                <div className="p-6">
+                                  <CardTitle className="font-headline">{campaign.title}</CardTitle>
+                                  <CardDescription className="line-clamp-2">{campaign.description}</CardDescription>
+                                </div>
                             </CardHeader>
-                            <CardContent className="flex-grow">
+                            <CardContent className="flex-grow p-6 pt-0">
                                 <div>
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-sm font-medium text-foreground">
@@ -133,7 +137,7 @@ export default function CampaignsPage() {
                                     </p>
                                 </div>
                             </CardContent>
-                            <CardFooter>
+                            <CardFooter className="p-6 pt-0">
                                 <Button asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
                                     <Link href={`/campaigns/${campaign.id}`}>
                                         Ver Detalhes

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs } from '@/lib/firebase';
 import { db } from '@/lib/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,7 @@ export default function ProvidersPage() {
 
   useEffect(() => {
     const fetchProviders = async () => {
+      setLoading(true);
       try {
         const q = query(collection(db, "users"), where("userType", "==", "prestador"));
         const querySnapshot = await getDocs(q);
@@ -60,15 +61,15 @@ export default function ProvidersPage() {
       {loading ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {[...Array(4)].map((_, i) => (
-            <Card key={`provider-skeleton-${i}`}>
-              <CardHeader className="items-center text-center">
+            <Card key={i}>
+              <CardHeader className="items-center text-center p-4">
                 <Skeleton className="w-20 h-20 rounded-full mb-4" />
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/2 mt-1" />
               </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-10 w-full mt-4" />
+              <CardContent className="p-4">
+                <Skeleton className="h-5 w-full mb-4" />
+                <Skeleton className="h-10 w-full" />
               </CardContent>
             </Card>
           ))}
@@ -77,15 +78,15 @@ export default function ProvidersPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {providers.map((provider) => (
             <Card key={provider.id}>
-              <CardHeader className="items-center text-center">
+              <CardHeader className="items-center text-center p-4">
                 <Avatar className="w-20 h-20 mb-4">
                   <AvatarImage src={provider.logo} alt={provider.name} data-ai-hint="company logo" />
-                  <AvatarFallback>{provider.name.charAt(0)}</AvatarFallback>
+                  <AvatarFallback className="text-2xl">{provider.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <CardTitle className="font-headline text-xl">{provider.name}</CardTitle>
                  <Badge variant="outline" className="mt-1">{provider.category}</Badge>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4">
                   <div className="flex justify-between items-center text-sm text-muted-foreground">
                       <span>{provider.location}</span>
                       <div className="flex items-center gap-1">

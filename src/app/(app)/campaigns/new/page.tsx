@@ -42,7 +42,6 @@ export default function NewCampaignPage() {
       title: "",
       description: "",
       goal: 0,
-      image: undefined,
     },
   });
   
@@ -236,7 +235,7 @@ export default function NewCampaignPage() {
                         <FormItem>
                           <FormLabel>Meta (R$)</FormLabel>
                           <FormControl>
-                              <Input type="number" placeholder="Ex: 1500.00" {...field} disabled={isSubmitting}/>
+                              <Input type="number" placeholder="Ex: 1500.00" {...field} onChange={event => field.onChange(+event.target.value)} disabled={isSubmitting}/>
                           </FormControl>
                           <FormMessage />
                         </FormItem>

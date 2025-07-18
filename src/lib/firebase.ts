@@ -1,4 +1,3 @@
-
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { 
@@ -10,7 +9,23 @@ import {
     signInWithEmailAndPassword,
     signOut,
 } from "firebase/auth";
-import { getFirestore, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
+import { 
+    getFirestore, 
+    doc, 
+    setDoc, 
+    updateDoc, 
+    collection, 
+    addDoc, 
+    serverTimestamp, 
+    query, 
+    orderBy,
+    where,
+    getDoc,
+    getDocs,
+    limit,
+    increment,
+    Query
+} from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -35,20 +50,20 @@ const googleProvider = new GoogleAuthProvider();
 const signInWithGoogle = async (): Promise<User | null> => {
     try {
         const result = await signInWithPopup(auth, googleProvider);
-        // The signed-in user info.
         const user = result.user;
-        // Check if user data already exists
         const userDocRef = doc(db, "users", user.uid);
-        // Optionally save or update user data in Firestore
-        await setDoc(userDocRef, {
-            uid: user.uid,
-            email: user.email,
-            fullName: user.displayName,
-            userType: 'sindico', // default or ask user
-            createdAt: new Date(),
-        }, { merge: true }); // merge true to avoid overwriting existing data
+        const userDoc = await getDoc(userDocRef);
+
+        if (!userDoc.exists()) {
+            await setDoc(userDocRef, {
+                uid: user.uid,
+                email: user.email,
+                fullName: user.displayName,
+                userType: 'sindico', // default, user can change later
+                createdAt: serverTimestamp(),
+            });
+        }
         
-        console.log("User signed in: ", user);
         return user;
     } catch (error) {
         console.error("Error during Google sign-in:", error);
@@ -66,7 +81,7 @@ const createUserWithEmailAndPassword = async (email: string, password: string, f
         email: user.email,
         fullName: fullName,
         userType: userType,
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
     });
 
     return userCredential;
@@ -74,9 +89,11 @@ const createUserWithEmailAndPassword = async (email: string, password: string, f
 
 
 export { 
+    app,
     auth, 
     db, 
     storage,
+    googleProvider,
     signInWithGoogle, 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword, 
@@ -84,12 +101,19 @@ export {
     doc, 
     setDoc,
     updateDoc,
-    ref,
-    uploadBytes,
-    getDownloadURL,
     collection,
     addDoc,
     serverTimestamp,
     query,
     orderBy,
+    where,
+    getDoc,
+    getDocs,
+    limit,
+    increment,
+    ref,
+    uploadBytes,
+    getDownloadURL,
 };
+
+export type { Query };

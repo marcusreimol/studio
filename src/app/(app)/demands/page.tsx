@@ -4,9 +4,9 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollectionData, useDocumentData } from 'react-firebase-hooks/firestore';
-import { collection, query, where, orderBy, doc, Query as FirestoreQuery } from 'firebase/firestore';
+import { collection, query, where, orderBy, doc, Query } from '@/lib/firebase';
 import { auth, db } from '@/lib/firebase';
-import { ListFilter, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,33 +48,35 @@ export default function DemandsPage() {
   const userDocRef = user ? doc(db, "users", user.uid) : null;
   const [profile, loadingProfile] = useDocumentData(userDocRef);
   
-  const [demandsQuery, setDemandsQuery] = useState<FirestoreQuery | null>(null);
-  const [activeTab, setActiveTab] = useState<CategoryKey>('all');
+  const [filter, setFilter] = useState<CategoryKey>('all');
+  const [demandsQuery, setDemandsQuery] = useState<Query | null>(null);
 
   useEffect(() => {
-    if (!loadingUser && !loadingProfile) {
-        let q;
-        const demandsCollection = collection(db, 'demands');
-        
-        const constraints = [];
-        if (profile?.userType === 'sindico' && user) {
-            constraints.push(where('authorId', '==', user.uid));
-        }
+    if (loadingUser || loadingProfile) return;
 
-        if (activeTab !== 'all') {
-            constraints.push(where('category', '==', activeTab));
+    const demandsCollection = collection(db, 'demands');
+    let q: Query;
+
+    if (profile?.userType === 'sindico' && user) {
+        if (filter === 'all') {
+            q = query(demandsCollection, where('authorId', '==', user.uid), orderBy('createdAt', 'desc'));
+        } else {
+            q = query(demandsCollection, where('authorId', '==', user.uid), where('category', '==', filter), orderBy('createdAt', 'desc'));
         }
-        
-        constraints.push(orderBy('createdAt', 'desc'));
-        
-        q = query(demandsCollection, ...constraints);
-        setDemandsQuery(q);
+    } else {
+        if (filter === 'all') {
+            q = query(demandsCollection, orderBy('createdAt', 'desc'));
+        } else {
+            q = query(demandsCollection, where('category', '==', filter), orderBy('createdAt', 'desc'));
+        }
     }
-  }, [user, profile, loadingUser, loadingProfile, activeTab]);
+    setDemandsQuery(q);
+
+  }, [user, profile, loadingUser, loadingProfile, filter]);
 
   const [demands, loadingDemands, error] = useCollectionData(demandsQuery, { idField: 'id' });
 
-  const loading = loadingUser || loadingProfile || loadingDemands || !demandsQuery;
+  const loading = loadingUser || loadingProfile || loadingDemands;
 
   const formatDate = (timestamp: Demand['createdAt']) => {
     if (!timestamp || !timestamp.seconds) return 'Data indisponível';
@@ -100,19 +102,19 @@ export default function DemandsPage() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold md:text-3xl font-headline">
-          {getCardTitle()}
+          {loading ? <Skeleton className="h-8 w-48" /> : getCardTitle()}
         </h1>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">
-              {categories[activeTab]}
+              {categories[filter]}
               <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuLabel>Filtrar por Categoria</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuRadioGroup value={activeTab} onValueChange={(value) => setActiveTab(value as CategoryKey)}>
+            <DropdownMenuRadioGroup value={filter} onValueChange={(value) => setFilter(value as CategoryKey)}>
               {Object.entries(categories).map(([key, value]) => (
                 <DropdownMenuRadioItem key={key} value={key}>{value}</DropdownMenuRadioItem>
               ))}
@@ -124,7 +126,7 @@ export default function DemandsPage() {
       <Card>
         <CardHeader>
           <CardDescription>
-            {getCardDescription()}
+             {loading ? <Skeleton className="h-5 w-80" /> : getCardDescription()}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -166,7 +168,7 @@ export default function DemandsPage() {
                        {demand.title}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{demand.category}</Badge>
+                      <Badge variant="outline">{categories[demand.category as CategoryKey] || demand.category}</Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       {demand.location}

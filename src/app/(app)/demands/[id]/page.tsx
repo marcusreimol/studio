@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useDocumentData, useCollectionData } from 'react-firebase-hooks/firestore';
-import { auth, db, collection, doc, addDoc, serverTimestamp, query, orderBy, getDoc } from "@/lib/firebase";
+import { auth, db, collection, doc, addDoc, serverTimestamp, query, orderBy, getDoc, updateDoc, increment } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type Demand = {
@@ -25,7 +25,7 @@ type Demand = {
   location: string;
   author: string;
   description: string;
-  safetyConcerns: string[];
+  safetyConcerns?: string[];
 };
 
 type Proposal = {
@@ -46,45 +46,20 @@ export default function DemandDetailPage() {
   const userDocRef = user ? doc(db, "users", user.uid) : null;
   const [profile, loadingProfile] = useDocumentData(userDocRef);
 
-  const [demand, setDemand] = useState<Demand | null>(null);
-  const [loadingDemand, setLoadingDemand] = useState(true);
+  const demandDocRef = id ? doc(db, 'demands', id) : null;
+  const [demand, loadingDemand] = useDocumentData(demandDocRef, { idField: 'id'});
 
   const proposalsCollectionRef = id ? collection(db, `demands/${id}/proposals`) : null;
   const proposalsQuery = proposalsCollectionRef ? query(proposalsCollectionRef, orderBy("createdAt", "desc")) : null;
-  const [proposals, loadingProposals, proposalsError] = useCollectionData(proposalsQuery, { idField: 'id' });
+  const [proposals, loadingProposals] = useCollectionData(proposalsQuery, { idField: 'id' });
 
   const [proposalMessage, setProposalMessage] = useState("");
   const [proposalValue, setProposalValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  useEffect(() => {
-    const fetchDemand = async () => {
-        if (!id) return;
-        setLoadingDemand(true);
-        try {
-            const demandDocRef = doc(db, 'demands', id);
-            const demandSnap = await getDoc(demandDocRef);
-
-            if (demandSnap.exists()) {
-                setDemand({ id: demandSnap.id, ...demandSnap.data() } as Demand);
-            } else {
-                setDemand(null);
-            }
-        } catch (error) {
-            console.error("Error fetching demand data:", error);
-            setDemand(null);
-        } finally {
-            setLoadingDemand(false);
-        }
-    };
-    if (id) {
-        fetchDemand();
-    }
-  }, [id]);
 
   const handleProposalSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!user || !id || !proposalsCollectionRef) return;
+    if (!user || !id || !proposalsCollectionRef || !demandDocRef) return;
     
     setIsSubmitting(true);
     try {
@@ -93,7 +68,13 @@ export default function DemandDetailPage() {
             value: parseFloat(proposalValue),
             providerReputation: (profile?.rating || 4.5), // Use profile rating or a default
             providerId: user.uid,
+            providerName: profile?.companyName || profile?.fullName,
+            providerLogo: profile?.logoUrl,
             createdAt: serverTimestamp(),
+        });
+        
+        await updateDoc(demandDocRef, {
+            proposalsCount: increment(1)
         });
         
         setProposalMessage("");
@@ -138,6 +119,7 @@ export default function DemandDetailPage() {
                         <CardContent><Skeleton className="h-20 w-full" /></CardContent>
                     </Card>
                 </div>
+                 <div className="mt-4"><Skeleton className="h-48 w-full" /></div>
           </div>
       )
   }

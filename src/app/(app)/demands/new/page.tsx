@@ -4,7 +4,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Loader2, AlertTriangle, Upload } from "lucide-react";
+import { ChevronLeft, Loader2, AlertTriangle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -12,7 +12,6 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -55,10 +54,9 @@ export default function NewDemandPage() {
   const handleAnalyzeDescription = async () => {
     const description = form.getValues("description");
     if (description.length < 30) {
-      toast({
-        variant: "destructive",
-        title: "Descrição muito curta",
-        description: "Por favor, forneça uma descrição mais detalhada para análise.",
+      form.setError("description", {
+        type: "manual",
+        message: "A descrição deve ter pelo menos 30 caracteres para uma boa análise.",
       });
       return;
     }
@@ -97,7 +95,9 @@ export default function NewDemandPage() {
     try {
       const demandsCollectionRef = collection(db, 'demands');
       await addDoc(demandsCollectionRef, {
-        ...data,
+        title: data.title,
+        category: data.category,
+        description: data.description,
         safetyConcerns,
         authorId: user.uid,
         author: profile.fullName || 'Síndico Anônimo',
@@ -129,7 +129,7 @@ export default function NewDemandPage() {
         <div className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4">
           <div className="flex items-center gap-4">
             <Button variant="outline" size="icon" className="h-7 w-7" asChild>
-              <Link href="/dashboard">
+              <Link href="/demands">
                 <ChevronLeft className="h-4 w-4" />
                 <span className="sr-only">Voltar</span>
               </Link>
