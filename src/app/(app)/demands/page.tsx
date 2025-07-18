@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollectionData, useDocumentData } from 'react-firebase-hooks/firestore';
-import { collection, query, where, orderBy, doc, Query as FirestoreQuery } from 'firebase/firestore';
+import { collection, query, where, orderBy, doc, Query as FirestoreQuery, WhereFilterOp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { File, ListFilter } from "lucide-react";
 import Link from "next/link";
@@ -37,22 +37,29 @@ export default function DemandsPage() {
   const [profile, loadingProfile] = useDocumentData(userDocRef);
   
   const [demandsQuery, setDemandsQuery] = useState<FirestoreQuery | null>(null);
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     // We need to wait for both user and profile to be loaded before creating a query.
-    if (!loadingUser && !loadingProfile && user && profile) {
-      if (profile.userType === 'sindico') {
-        // If sindico, query for their demands
-        setDemandsQuery(query(collection(db, 'demands'), where('authorId', '==', user.uid), orderBy('createdAt', 'desc')));
-      } else {
-        // If provider, query for all demands
-        setDemandsQuery(query(collection(db, 'demands'), orderBy('createdAt', 'desc')));
-      }
-    } else if (!loadingUser && !user) {
-        // Public view, show all demands
-        setDemandsQuery(query(collection(db, 'demands'), orderBy('createdAt', 'desc')));
+    if (!loadingUser && !loadingProfile) {
+        let q;
+        const demandsCollection = collection(db, 'demands');
+        
+        const constraints = [];
+        if (profile?.userType === 'sindico' && user) {
+            constraints.push(where('authorId', '==', user.uid));
+        }
+
+        if (activeTab !== 'all') {
+            constraints.push(where('category', '==', activeTab));
+        }
+        
+        constraints.push(orderBy('createdAt', 'desc'));
+        
+        q = query(demandsCollection, ...constraints);
+        setDemandsQuery(q);
     }
-  }, [user, profile, loadingUser, loadingProfile]);
+  }, [user, profile, loadingUser, loadingProfile, activeTab]);
 
   const [demands, loadingDemands, error] = useCollectionData(demandsQuery, { idField: 'id' });
 
@@ -79,13 +86,17 @@ export default function DemandsPage() {
   };
 
   return (
-    <Tabs defaultValue="all">
+    <Tabs defaultValue="all" onValueChange={setActiveTab}>
       <div className="flex items-center">
         <TabsList>
           <TabsTrigger value="all">Todas</TabsTrigger>
           <TabsTrigger value="hidraulica">Hidráulica</TabsTrigger>
           <TabsTrigger value="eletrica">Elétrica</TabsTrigger>
           <TabsTrigger value="seguranca">Segurança</TabsTrigger>
+          <TabsTrigger value="pintura">Pintura</TabsTrigger>
+          <TabsTrigger value="limpeza">Limpeza</TabsTrigger>
+          <TabsTrigger value="jardinagem">Jardinagem</TabsTrigger>
+          <TabsTrigger value="outros">Outros</TabsTrigger>
         </TabsList>
         <div className="ml-auto flex items-center gap-2">
           <DropdownMenu>
@@ -108,7 +119,7 @@ export default function DemandsPage() {
           </DropdownMenu>
         </div>
       </div>
-      <TabsContent value="all">
+      <TabsContent value="all" className="mt-4">
         <Card>
           <CardHeader>
             <CardTitle>{getCardTitle()}</CardTitle>
@@ -173,7 +184,7 @@ export default function DemandsPage() {
                 ) : (
                    <TableRow>
                       <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        Nenhuma demanda encontrada.
+                        Nenhuma demanda encontrada para esta categoria.
                       </TableCell>
                     </TableRow>
                 )}
