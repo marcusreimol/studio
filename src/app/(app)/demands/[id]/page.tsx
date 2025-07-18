@@ -30,8 +30,7 @@ type Proposal = {
 };
 
 export default function DemandDetailPage() {
-  const params = useParams();
-  const id = params.id as string;
+  const { id } = useParams();
   const demand = demands.find((d) => d.id === id);
   const { toast } = useToast();
 
