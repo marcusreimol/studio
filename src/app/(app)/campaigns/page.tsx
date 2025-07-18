@@ -78,7 +78,7 @@ export default function CampaignsPage() {
             {showLoadingSkeleton ? (
                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {[...Array(3)].map((_, i) => (
-                        <Card key={`skeleton-${i}`} className="flex flex-col">
+                        <Card key={`skeleton-campaign-${i}`} className="flex flex-col">
                             <CardHeader>
                                 <div className="aspect-video relative mb-4">
                                     <Skeleton className="h-full w-full rounded-t-lg" />
