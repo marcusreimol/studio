@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { useDocumentData, useCollectionData } from 'react-firebase-hooks/firestore';
 
 type CampaignData = {
     title: string;
@@ -39,74 +40,61 @@ export default function CampaignDetailPage() {
     const id = params.id as string;
     const { toast } = useToast();
     
-    const [user] = useAuthState(auth);
-    const [campaign, setCampaign] = useState<CampaignData | null>(null);
-    const [supporters, setSupporters] = useState<SupporterData[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [user, loadingUser] = useAuthState(auth);
+    const [supportersData, setSupportersData] = useState<SupporterData[]>([]);
+    const [loadingSupporters, setLoadingSupporters] = useState(true);
+
+    const campaignDocRef = id ? doc(db, 'campaigns', id) : null;
+    const [campaign, loadingCampaign, errorCampaign] = useDocumentData(campaignDocRef);
+
+    const supportersCollectionRef = id ? collection(db, `campaigns/${id}/supporters`) : null;
+    const [supporters, loadingRawSupporters, errorSupporters] = useCollectionData(supportersCollectionRef);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [supportValue, setSupportValue] = useState("");
 
-    const fetchCampaignAndSupporters = async () => {
-        if (!id) return;
-        setLoading(true);
-        try {
-            const campaignDocRef = doc(db, 'campaigns', id);
-            const campaignSnap = await getDoc(campaignDocRef);
-
-            if (!campaignSnap.exists()) {
-                setCampaign(null);
+    useEffect(() => {
+        const enrichSupporters = async () => {
+            if (!supporters) {
+                setLoadingSupporters(false);
                 return;
-            }
-            setCampaign(campaignSnap.data() as CampaignData);
-
-            const supportersCollectionRef = collection(db, `campaigns/${id}/supporters`);
-            const supportersQuery = query(supportersCollectionRef);
-            const supportersSnapshot = await getDocs(supportersQuery);
+            };
+            setLoadingSupporters(true);
             
-            const supportersData = await Promise.all(
-                supportersSnapshot.docs.map(async (supporterDoc) => {
-                    const supporter = supporterDoc.data();
+            const enrichedData = await Promise.all(
+                supporters.map(async (supporter) => {
                     const providerDocRef = doc(db, 'users', supporter.providerId);
                     const providerSnap = await getDoc(providerDocRef);
                     const providerData = providerSnap.data();
 
                     return {
-                        id: supporterDoc.id,
+                        id: supporter.id,
                         amount: supporter.amount,
                         providerName: providerData?.companyName || providerData?.fullName || 'Apoiador Anônimo',
                         providerLogo: providerData?.logoUrl || `https://placehold.co/40x40.png`,
                     };
                 })
             );
-            setSupporters(supportersData.sort((a, b) => b.amount - a.amount));
-
-        } catch (error) {
-            console.error("Error fetching campaign data: ", error);
-        } finally {
-            setLoading(false);
+            setSupportersData(enrichedData.sort((a, b) => b.amount - a.amount));
+            setLoadingSupporters(false);
         }
-    };
-
-    useEffect(() => {
-        fetchCampaignAndSupporters();
-    }, [id]);
+        enrichSupporters();
+    }, [supporters]);
 
     const handleSupportSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user || !id || !supportValue) return;
+        if (!user || !id || !supportValue || !supportersCollectionRef || !campaignDocRef) return;
 
         setIsSubmitting(true);
         const amount = parseFloat(supportValue);
 
         try {
-            const supportersCollectionRef = collection(db, `campaigns/${id}/supporters`);
             await addDoc(supportersCollectionRef, {
                 providerId: user.uid,
                 amount: amount,
                 createdAt: serverTimestamp(),
             });
 
-            const campaignDocRef = doc(db, 'campaigns', id);
             await updateDoc(campaignDocRef, {
                 current: increment(amount)
             });
@@ -116,8 +104,6 @@ export default function CampaignDetailPage() {
                 description: "Obrigado por apoiar esta causa!",
             });
             setSupportValue("");
-            // Refetch data to show new supporter and updated progress
-            fetchCampaignAndSupporters();
         } catch (error) {
             console.error("Error submitting support:", error);
             toast({
@@ -129,6 +115,8 @@ export default function CampaignDetailPage() {
             setIsSubmitting(false);
         }
     }
+    
+    const loading = loadingUser || loadingCampaign || loadingSupporters;
 
     if (loading) {
         return (
@@ -146,7 +134,7 @@ export default function CampaignDetailPage() {
         );
     }
 
-    if (!campaign) {
+    if (!campaign || errorCampaign) {
         return (
             <div className="text-center py-10">
                 <h1 className="text-2xl font-bold">Campanha não encontrada.</h1>
@@ -203,7 +191,7 @@ export default function CampaignDetailPage() {
                             <span>R$ {(campaign.current || 0).toLocaleString('pt-BR')}</span>
                             <span className="text-muted-foreground">R$ {campaign.goal.toLocaleString('pt-BR')}</span>
                         </div>
-                        <p className="text-sm text-muted-foreground text-center">{supporters.length} apoiadores até agora</p>
+                        <p className="text-sm text-muted-foreground text-center">{supportersData.length} apoiadores até agora</p>
                     </CardContent>
                     <CardFooter>
                          <form onSubmit={handleSupportSubmit} className="w-full space-y-4">
@@ -235,9 +223,9 @@ export default function CampaignDetailPage() {
                     <CardDescription>Veja quem está ajudando a tornar esta campanha uma realidade.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {supporters.length > 0 ? (
+                    {supportersData.length > 0 ? (
                         <ul className="space-y-4">
-                            {supporters.map(supporter => (
+                            {supportersData.map(supporter => (
                                 <li key={supporter.id} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
                                     <div className="flex items-center gap-4">
                                         <Avatar>
