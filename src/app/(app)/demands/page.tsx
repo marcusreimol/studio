@@ -52,7 +52,7 @@ export default function DemandsPage() {
   const [demandsQuery, setDemandsQuery] = useState<Query | null>(null);
 
   useEffect(() => {
-    if (loadingUser || loadingProfile) return;
+    if (loadingUser || loadingProfile || !profile) return;
 
     const demandsCollection = collection(db, 'demands');
     let q: Query;
@@ -76,7 +76,7 @@ export default function DemandsPage() {
 
   const [demands, loadingDemands, error] = useCollectionData(demandsQuery, { idField: 'id' });
 
-  const loading = loadingUser || loadingProfile || loadingDemands;
+  const loading = loadingUser || loadingProfile || !demandsQuery || loadingDemands;
 
   const formatDate = (timestamp: Demand['createdAt']) => {
     if (!timestamp || !timestamp.seconds) return 'Data indisponível';
