@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { useCollectionData, useDocumentData } from 'react-firebase-hooks/firestore';
+import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { collection, query, where, orderBy, doc, Query } from '@/lib/firebase';
 import { auth, db } from '@/lib/firebase';
 import { ChevronDown } from "lucide-react";
@@ -45,29 +45,16 @@ type CategoryKey = keyof typeof categories;
 
 export default function DemandsPage() {
   const [user, loadingUser] = useAuthState(auth);
-  
   const [filter, setFilter] = useState<CategoryKey>('all');
-  const [demandsQuery, setDemandsQuery] = useState<Query | null>(null);
 
-  useEffect(() => {
-    if (loadingUser) return;
-
-    const demandsCollection = collection(db, 'demands');
-    let q: Query;
-
-    if (filter === 'all') {
-        q = query(demandsCollection, orderBy('createdAt', 'desc'));
-    } else {
-        q = query(demandsCollection, where('category', '==', filter), orderBy('createdAt', 'desc'));
-    }
-    
-    setDemandsQuery(q);
-
-  }, [user, loadingUser, filter]);
+  const demandsCollection = collection(db, 'demands');
+  const demandsQuery = filter === 'all'
+    ? query(demandsCollection, orderBy('createdAt', 'desc'))
+    : query(demandsCollection, where('category', '==', filter), orderBy('createdAt', 'desc'));
 
   const [demands, loadingDemands, error] = useCollectionData(demandsQuery, { idField: 'id' });
 
-  const loading = loadingUser || !demandsQuery || loadingDemands;
+  const loading = loadingUser || loadingDemands;
 
   const formatDate = (timestamp: Demand['createdAt']) => {
     if (!timestamp || !timestamp.seconds) return 'Data indisponível';
