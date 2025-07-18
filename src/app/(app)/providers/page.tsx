@@ -60,7 +60,7 @@ export default function ProvidersPage() {
       {loading ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {[...Array(4)].map((_, i) => (
-            <Card key={i}>
+            <Card key={`provider-skeleton-${i}`}>
               <CardHeader className="items-center text-center">
                 <Skeleton className="w-20 h-20 rounded-full mb-4" />
                 <Skeleton className="h-6 w-3/4" />
