@@ -1,43 +1,79 @@
 
+"use client";
 
-import {
-  File,
-  ListFilter,
-  MoreHorizontal,
-  PlusCircle,
-} from "lucide-react";
+import { useState, useEffect } from 'react';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { useCollectionData, useDocumentData } from 'react-firebase-hooks/firestore';
+import { collection, query, where, orderBy, doc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
+import { File, ListFilter } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { demands } from "@/lib/data";
+import { Skeleton } from '@/components/ui/skeleton';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+type Demand = {
+  id: string;
+  title: string;
+  category: string;
+  location: string;
+  author: string;
+  createdAt: {
+    seconds: number;
+    nanoseconds: number;
+  };
+  proposalsCount: number;
+};
 
 export default function DemandsPage() {
+  const [user, loadingUser] = useAuthState(auth);
+  const userDocRef = user ? doc(db, "users", user.uid) : null;
+  const [profile, loadingProfile] = useDocumentData(userDocRef);
+
+  const [demandsQuery, setDemandsQuery] = useState<any>(null);
+
+  useEffect(() => {
+    if (loadingUser || loadingProfile) return;
+
+    let q;
+    if (profile?.userType === 'sindico' && user) {
+      q = query(collection(db, 'demands'), where('authorId', '==', user.uid), orderBy('createdAt', 'desc'));
+    } else {
+      q = query(collection(db, 'demands'), orderBy('createdAt', 'desc'));
+    }
+    setDemandsQuery(q);
+  }, [user, profile, loadingUser, loadingProfile]);
+
+  const [demands, loadingDemands, error] = useCollectionData(demandsQuery, { idField: 'id' });
+
+  const loading = loadingUser || loadingProfile || loadingDemands;
+
+  const formatDate = (timestamp: Demand['createdAt']) => {
+    if (!timestamp) return 'Data indisponível';
+    const date = new Date(timestamp.seconds * 1000);
+    return formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
+  };
+  
+  const getCardTitle = () => {
+    if (profile?.userType === 'sindico') {
+      return "Minhas Demandas";
+    }
+    return "Demandas Abertas";
+  };
+  
+  const getCardDescription = () => {
+    if (profile?.userType === 'sindico') {
+      return "Gerencie as demandas que você publicou para o seu condomínio.";
+    }
+    return "Encontre oportunidades de serviço em condomínios.";
+  };
+
   return (
     <Tabs defaultValue="all">
       <div className="flex items-center">
@@ -77,9 +113,9 @@ export default function DemandsPage() {
       <TabsContent value="all">
         <Card>
           <CardHeader>
-            <CardTitle>Demandas Abertas</CardTitle>
+            <CardTitle>{getCardTitle()}</CardTitle>
             <CardDescription>
-              Encontre oportunidades de serviço em condomínios.
+              {getCardDescription()}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -98,33 +134,57 @@ export default function DemandsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {demands.map((demand) => (
-                  <TableRow key={demand.id}>
-                    <TableCell className="font-medium">
-                       {demand.title}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{demand.category}</Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {demand.location}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {demand.postedAt}
-                    </TableCell>
-                    <TableCell className="text-right">
-                        <Button asChild variant="outline" size="sm">
-                            <Link href={`/demands/${demand.id}`}>Ver Detalhes</Link>
-                        </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {loading ? (
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-32" /></TableCell>
+                      <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : error ? (
+                   <TableRow>
+                      <TableCell colSpan={5} className="text-center text-destructive py-8">
+                        Erro ao carregar as demandas.
+                      </TableCell>
+                    </TableRow>
+                ) : demands && demands.length > 0 ? (
+                  (demands as Demand[]).map((demand) => (
+                    <TableRow key={demand.id}>
+                      <TableCell className="font-medium">
+                         {demand.title}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{demand.category}</Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {demand.location}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {formatDate(demand.createdAt)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                          <Button asChild variant="outline" size="sm">
+                              <Link href={`/demands/${demand.id}`}>Ver Detalhes</Link>
+                          </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                   <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                        Nenhuma demanda encontrada.
+                      </TableCell>
+                    </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
           <CardFooter>
             <div className="text-xs text-muted-foreground">
-              Mostrando <strong>1-10</strong> de <strong>32</strong> demandas
+              Mostrando <strong>{demands?.length || 0}</strong> {demands?.length === 1 ? 'demanda' : 'demandas'}
             </div>
           </CardFooter>
         </Card>
@@ -132,3 +192,5 @@ export default function DemandsPage() {
     </Tabs>
   );
 }
+
+    

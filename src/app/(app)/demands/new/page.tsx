@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ChevronLeft, Loader2, AlertTriangle, Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,6 +21,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 
 import { analyzeServiceDescription } from "@/ai/flows/safety-analyzer";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db, addDoc, collection, serverTimestamp, doc } from "@/lib/firebase";
+import { useDocumentData } from "react-firebase-hooks/firestore";
 
 const demandFormSchema = z.object({
   title: z.string().min(10, { message: "O título deve ter pelo menos 10 caracteres." }),
@@ -31,8 +35,15 @@ type DemandFormValues = z.infer<typeof demandFormSchema>;
 
 export default function NewDemandPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [safetyConcerns, setSafetyConcerns] = useState<string[]>([]);
   const { toast } = useToast();
+  const router = useRouter();
+
+  const [user] = useAuthState(auth);
+  const userDocRef = user ? doc(db, "users", user.uid) : null;
+  const [profile] = useDocumentData(userDocRef);
+
 
   const form = useForm<DemandFormValues>({
     resolver: zodResolver(demandFormSchema),
@@ -70,12 +81,43 @@ export default function NewDemandPage() {
     }
   };
 
-  function onSubmit(data: DemandFormValues) {
-    console.log(data);
-    toast({
-      title: "Demanda Publicada!",
-      description: "Sua demanda foi enviada com sucesso e os prestadores serão notificados.",
-    });
+  async function onSubmit(data: DemandFormValues) {
+    if (!user || !profile) {
+      toast({
+        variant: "destructive",
+        title: "Erro de Autenticação",
+        description: "Você precisa estar logado para publicar uma demanda.",
+      });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const demandsCollectionRef = collection(db, 'demands');
+      await addDoc(demandsCollectionRef, {
+        ...data,
+        safetyConcerns,
+        authorId: user.uid,
+        author: profile.fullName || 'Síndico Anônimo',
+        location: profile.condominioName || 'Local não definido', // Assuming location comes from profile
+        status: 'aberto',
+        proposalsCount: 0,
+        createdAt: serverTimestamp(),
+      });
+      toast({
+        title: "Demanda Publicada!",
+        description: "Sua demanda foi enviada com sucesso e os prestadores serão notificados.",
+      });
+      router.push('/demands');
+    } catch (error) {
+      console.error("Error creating demand:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao Publicar",
+        description: "Não foi possível publicar sua demanda. Tente novamente.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -91,10 +133,13 @@ export default function NewDemandPage() {
           Nova Demanda de Serviço
         </h1>
         <div className="hidden items-center gap-2 md:ml-auto md:flex">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" type="button" onClick={() => router.back()}>
             Descartar
           </Button>
-          <Button size="sm" onClick={form.handleSubmit(onSubmit)}>Publicar Demanda</Button>
+          <Button size="sm" onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting || isAnalyzing}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isSubmitting ? 'Publicando...' : 'Publicar Demanda'}
+          </Button>
         </div>
       </div>
       <Form {...form}>
@@ -116,7 +161,7 @@ export default function NewDemandPage() {
                       <FormItem>
                         <FormLabel>Título da Demanda</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ex: Manutenção do portão da garagem" {...field} />
+                          <Input placeholder="Ex: Manutenção do portão da garagem" {...field} disabled={isSubmitting} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -130,7 +175,7 @@ export default function NewDemandPage() {
                       <FormItem>
                          <div className="flex items-center justify-between">
                             <FormLabel>Descrição Detalhada do Serviço</FormLabel>
-                             <Button type="button" variant="outline" size="sm" onClick={handleAnalyzeDescription} disabled={isAnalyzing}>
+                             <Button type="button" variant="outline" size="sm" onClick={handleAnalyzeDescription} disabled={isAnalyzing || isSubmitting}>
                                 {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <AlertTriangle className="mr-2 h-4 w-4" />}
                                 Analisar Segurança
                             </Button>
@@ -140,6 +185,7 @@ export default function NewDemandPage() {
                             placeholder="Descreva o problema ou a necessidade com o máximo de detalhes possível."
                             className="min-h-32"
                             {...field}
+                            disabled={isSubmitting}
                           />
                         </FormControl>
                         <FormMessage />
@@ -184,7 +230,7 @@ export default function NewDemandPage() {
                                 </p>
                                 <p className="text-xs text-muted-foreground">SVG, PNG, JPG ou MP4</p>
                             </div>
-                            <Input id="dropzone-file" type="file" className="hidden" multiple />
+                            <Input id="dropzone-file" type="file" className="hidden" multiple disabled={isSubmitting} />
                         </Label>
                     </div>
                 </div>
@@ -202,7 +248,7 @@ export default function NewDemandPage() {
                     name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
                             <FormControl>
                                 <SelectTrigger>
                                 <SelectValue placeholder="Selecione uma categoria" />
@@ -232,7 +278,10 @@ export default function NewDemandPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button type="submit" className="w-full">Publicar Demanda</Button>
+                    <Button type="submit" className="w-full" disabled={isSubmitting || isAnalyzing}>
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Publicar Demanda
+                    </Button>
                 </CardContent>
             </Card>
           </div>
@@ -241,3 +290,5 @@ export default function NewDemandPage() {
     </div>
   );
 }
+
+    
