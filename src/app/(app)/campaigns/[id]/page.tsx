@@ -48,7 +48,7 @@ export default function CampaignDetailPage() {
     const [campaign, loadingCampaign, errorCampaign] = useDocumentData(campaignDocRef);
 
     const supportersCollectionRef = id ? collection(db, `campaigns/${id}/supporters`) : null;
-    const [supporters, loadingRawSupporters, errorSupporters] = useCollectionData(supportersCollectionRef);
+    const [supporters, loadingRawSupporters, errorSupporters] = useCollectionData(supportersCollectionRef, { idField: 'id' });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [supportValue, setSupportValue] = useState("");
@@ -223,7 +223,9 @@ export default function CampaignDetailPage() {
                     <CardDescription>Veja quem está ajudando a tornar esta campanha uma realidade.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {supportersData.length > 0 ? (
+                    {loadingSupporters ? (
+                        <div className="text-center text-muted-foreground p-8">Carregando apoiadores...</div>
+                    ) : supportersData.length > 0 ? (
                         <ul className="space-y-4">
                             {supportersData.map(supporter => (
                                 <li key={supporter.id} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
