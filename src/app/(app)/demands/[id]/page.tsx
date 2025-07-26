@@ -13,22 +13,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useDocumentData, useCollectionData } from 'react-firebase-hooks/firestore';
 import { auth, db, collection, doc, addDoc, serverTimestamp, query, orderBy, updateDoc, increment } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
-
-type Demand = {
-  id: string;
-  title: string;
-  category: string;
-  location: string;
-  author: string;
-  authorId: string;
-  description: string;
-  safetyConcerns?: string[];
-};
 
 type Proposal = {
   id?: string;
@@ -45,6 +45,7 @@ export default function DemandDetailPage() {
   const params = useParams();
   const id = params.id as string;
   const { toast } = useToast();
+  const router = useRouter();
 
   const [user, loadingUser] = useAuthState(auth);
   const userDocRef = user ? doc(db, "users", user.uid) : null;
@@ -60,6 +61,8 @@ export default function DemandDetailPage() {
   const [proposalMessage, setProposalMessage] = useState("");
   const [proposalValue, setProposalValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isHiring, setIsHiring] = useState(false);
+
 
   const handleProposalSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -100,6 +103,34 @@ export default function DemandDetailPage() {
     }
   }
 
+  const handleHire = async (proposal: Proposal) => {
+    if (!demandDocRef) return;
+    setIsHiring(true);
+    try {
+      await updateDoc(demandDocRef, {
+        status: 'contratado',
+        hiredProviderId: proposal.providerId,
+        hiredProviderName: proposal.providerName,
+        hiredValue: proposal.value,
+        hiredAt: serverTimestamp(),
+      });
+      toast({
+        title: "Fornecedor Contratado!",
+        description: `Você contratou ${proposal.providerName} para este serviço.`,
+      });
+      // Optionally, you can add further logic like sending notifications
+    } catch (error) {
+      console.error("Error hiring provider:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro!",
+        description: "Não foi possível contratar o fornecedor. Tente novamente.",
+      });
+    } finally {
+      setIsHiring(false);
+    }
+  };
+
   const loading = loadingUser || loadingProfile || loadingDemand;
 
   if (loading) {
@@ -133,6 +164,7 @@ export default function DemandDetailPage() {
   }
   
   const isDemandCreator = user?.uid === demand.authorId;
+  const isDemandOpen = demand.status === 'aberto';
 
   return (
     <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-6">
@@ -151,7 +183,9 @@ export default function DemandDetailPage() {
                     <span>{demand.location}</span>
                 </div>
             </div>
-            <Badge variant="outline">{demand.category}</Badge>
+            <Badge variant={isDemandOpen ? "outline" : "default"} className={!isDemandOpen ? "bg-green-600 text-white" : ""}>
+              {demand.status === 'contratado' ? 'Contratado' : demand.status}
+            </Badge>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
@@ -186,54 +220,59 @@ export default function DemandDetailPage() {
         </div>
         
         
-        <Card>
-            <CardHeader>
-                <CardTitle>Enviar Cotação</CardTitle>
-                <CardDescription>
-                    Sua proposta será enviada para o responsável pela demanda.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleProposalSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="proposal-message">Sua Proposta</Label>
-                            <Textarea
-                            id="proposal-message"
-                            placeholder="Descreva como você resolverá o problema, materiais que serão usados, prazos, etc."
-                            className="min-h-32"
-                            required
-                            value={proposalMessage}
-                            onChange={(e) => setProposalMessage(e.target.value)}
-                            disabled={isSubmitting}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="proposal-value">Valor da Proposta (R$)</Label>
-                        <Input
-                            id="proposal-value"
-                            type="number"
-                            placeholder="Ex: 550.00"
-                            required
-                            step="0.01"
-                            value={proposalValue}
-                            onChange={(e) => setProposalValue(e.target.value)}
-                            disabled={isSubmitting}
-                        />
-                    </div>
-                    <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                        {isSubmitting ? "Enviando..." : "Enviar Proposta"}
-                    </Button>
-                </form>
-            </CardContent>
-        </Card>
+        {isDemandOpen && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Enviar Cotação</CardTitle>
+                    <CardDescription>
+                        Sua proposta será enviada para o responsável pela demanda.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleProposalSubmit} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="proposal-message">Sua Proposta</Label>
+                                <Textarea
+                                id="proposal-message"
+                                placeholder="Descreva como você resolverá o problema, materiais que serão usados, prazos, etc."
+                                className="min-h-32"
+                                required
+                                value={proposalMessage}
+                                onChange={(e) => setProposalMessage(e.target.value)}
+                                disabled={isSubmitting}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="proposal-value">Valor da Proposta (R$)</Label>
+                            <Input
+                                id="proposal-value"
+                                type="number"
+                                placeholder="Ex: 550.00"
+                                required
+                                step="0.01"
+                                value={proposalValue}
+                                onChange={(e) => setProposalValue(e.target.value)}
+                                disabled={isSubmitting}
+                            />
+                        </div>
+                        <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                            {isSubmitting ? "Enviando..." : "Enviar Proposta"}
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+        )}
         
         
         <Card>
             <CardHeader>
                 <CardTitle>Propostas Recebidas</CardTitle>
                 <CardDescription>
-                    Abaixo estão as cotações recebidas para esta demanda.
+                    {isDemandOpen 
+                        ? "Abaixo estão as cotações recebidas para esta demanda." 
+                        : `Esta demanda foi contratada. Fornecedor selecionado: ${demand.hiredProviderName}.`
+                    }
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -242,7 +281,7 @@ export default function DemandDetailPage() {
                 ) : proposals && proposals.length > 0 ? (
                     <div className="space-y-4">
                         {(proposals as Proposal[]).map((proposal) => (
-                            <Card key={proposal.id} className="bg-secondary/50">
+                            <Card key={proposal.id} className={!isDemandOpen && demand.hiredProviderId !== proposal.providerId ? "opacity-50" : "bg-secondary/50"}>
                                 <CardHeader>
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-start gap-4">
@@ -263,11 +302,30 @@ export default function DemandDetailPage() {
                                                 </div>
                                             </div>
                                         </div>
-                                        {isDemandCreator && (
-                                            <Button size="sm">
-                                                <UserCheck className="mr-2 h-4 w-4" />
-                                                Contratar
-                                            </Button>
+                                        {isDemandCreator && isDemandOpen && (
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button size="sm" disabled={isHiring}>
+                                                        <UserCheck className="mr-2 h-4 w-4" />
+                                                        Contratar
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                    <AlertDialogTitle>Confirmar Contratação</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Você tem certeza que deseja contratar <strong>{proposal.providerName}</strong> por <strong>R$ {proposal.value.toLocaleString('pt-BR')}</strong>? Esta ação não pode ser desfeita.
+                                                    </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleHire(proposal)}>Confirmar</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        )}
+                                        {!isDemandOpen && demand.hiredProviderId === proposal.providerId && (
+                                            <Badge variant="default" className="bg-green-600 text-white">Contratado</Badge>
                                         )}
                                     </div>
                                 </CardHeader>
