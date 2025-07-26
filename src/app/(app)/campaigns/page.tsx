@@ -80,7 +80,7 @@ export default function CampaignsPage() {
                     {[...Array(3)].map((_, i) => (
                         <Card key={i} className="flex flex-col">
                             <CardHeader className="p-0">
-                                <div className="aspect-video relative mb-4">
+                                <div className="aspect-video relative">
                                     <Skeleton className="h-full w-full rounded-t-lg" />
                                 </div>
                                 <div className="p-6">
