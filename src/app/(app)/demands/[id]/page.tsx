@@ -63,7 +63,7 @@ export default function DemandDetailPage() {
 
   const handleProposalSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!user || !id || !proposalsCollectionRef || !demandDocRef) return;
+    if (!user || !id || !proposalsCollectionRef || !demandDocRef || !profile) return;
     
     setIsSubmitting(true);
     try {
@@ -289,3 +289,5 @@ export default function DemandDetailPage() {
     </div>
   );
 }
+
+    
