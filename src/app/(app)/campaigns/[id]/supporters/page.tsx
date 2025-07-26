@@ -12,6 +12,9 @@ export default function CampaignSupportersRedirectPage() {
     useEffect(() => {
         if (id) {
             redirect(`/campaigns/${id}`);
+        } else {
+            // Redirect to a general page if no ID is found
+            redirect('/campaigns');
         }
     }, [id]);
 

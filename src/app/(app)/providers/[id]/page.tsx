@@ -23,6 +23,7 @@ type ProviderData = {
   website?: string;
   linkedin?: string;
   facebook?: string;
+  about?: string;
 };
 
 export default function ProviderProfilePage() {
@@ -46,11 +47,12 @@ export default function ProviderProfilePage() {
             logo: data.logoUrl || `https://placehold.co/96x96.png`,
             category: 'Serviços Gerais', // Placeholder
             rating: 4.5, // Placeholder
-            location: 'Rio de Janeiro', // Placeholder
+            location: data.condominioName || 'Local não definido',
             phone: data.phone,
             website: data.website,
             linkedin: data.linkedin,
             facebook: data.facebook,
+            about: data.about,
           });
         } else {
           setProvider(null); // Triggers notFound
@@ -169,6 +171,15 @@ export default function ProviderProfilePage() {
             </CardContent>
         </Card>
       </div>
+      
+       <Card>
+            <CardHeader>
+                <CardTitle>Sobre a Empresa</CardTitle>
+            </CardHeader>
+            <CardContent>
+                 <p className="text-muted-foreground">{provider.about || 'Nenhuma descrição disponível.'}</p>
+            </CardContent>
+        </Card>
 
        <Card>
             <CardHeader>
