@@ -78,7 +78,9 @@ export default function CampaignDetailPage() {
             setSupportersData(enrichedData.sort((a, b) => b.amount - a.amount));
             setLoadingSupporters(false);
         }
-        enrichSupporters();
+        if (supporters) {
+          enrichSupporters();
+        }
     }, [supporters]);
 
     const handleSupportSubmit = async (e: React.FormEvent) => {
@@ -135,15 +137,7 @@ export default function CampaignDetailPage() {
     }
 
     if (!campaign || errorCampaign) {
-        return (
-            <div className="text-center py-10">
-                <h1 className="text-2xl font-bold">Campanha não encontrada.</h1>
-                <p className="text-muted-foreground">O link pode estar quebrado ou a campanha pode ter sido removida.</p>
-                <Button asChild className="mt-4">
-                    <Link href="/campaigns">Voltar para Campanhas</Link>
-                </Button>
-            </div>
-        );
+        return notFound();
     }
     
     const progress = Math.min(((campaign.current || 0) / campaign.goal) * 100, 100);
@@ -252,3 +246,5 @@ export default function CampaignDetailPage() {
         </div>
     );
 }
+
+    
