@@ -9,6 +9,7 @@ import { auth, db } from "@/lib/firebase";
 import { doc, collection, query, getDocs } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 export default function AnalyticsPage() {
     const [user] = useAuthState(auth);
@@ -80,112 +81,126 @@ export default function AnalyticsPage() {
             {isSindico ? (
                 <>
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">
-                                    Total Investido em Demandas
-                                </CardTitle>
-                                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">R$ 45.231,89</div>
-                                <p className="text-xs text-muted-foreground">
-                                    +20.1% em relação ao mês passado
-                                </p>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">
-                                    Demandas Concluídas
-                                </CardTitle>
-                                <Briefcase className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">+12</div>
-                                <p className="text-xs text-muted-foreground">
-                                    este mês
-                                </p>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">
-                                    Novos Fornecedores
-                                </CardTitle>
-                                <Users className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">+3</div>
-                                <p className="text-xs text-muted-foreground">
-                                    desde a semana passada
-                                </p>
-                            </CardContent>
-                        </Card>
+                         <Link href="/demands">
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">
+                                        Total Investido em Demandas
+                                    </CardTitle>
+                                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">R$ 45.231,89</div>
+                                    <p className="text-xs text-muted-foreground">
+                                        +20.1% em relação ao mês passado
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </Link>
+                         <Link href="/demands">
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">
+                                        Demandas Concluídas
+                                    </CardTitle>
+                                    <Briefcase className="h-4 w-4 text-muted-foreground" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">+12</div>
+                                    <p className="text-xs text-muted-foreground">
+                                        este mês
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </Link>
+                        <Link href="/providers">
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">
+                                        Novos Fornecedores
+                                    </CardTitle>
+                                    <Users className="h-4 w-4 text-muted-foreground" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">+3</div>
+                                    <p className="text-xs text-muted-foreground">
+                                        desde a semana passada
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </Link>
                     </div>
                     <div className="mt-8">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Visão Geral de Campanhas</CardTitle>
-                                <CardDescription>Dados sobre o engajamento das campanhas de sustentabilidade.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="grid gap-6 md:grid-cols-2">
-                                <div className="flex items-center gap-4 p-4 rounded-lg bg-secondary">
-                                    <HeartHandshake className="h-8 w-8 text-primary" />
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Total de Campanhas</p>
-                                        <p className="text-2xl font-bold">{totalCampaigns}</p>
+                        <Link href="/campaigns">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Visão Geral de Campanhas</CardTitle>
+                                    <CardDescription>Dados sobre o engajamento das campanhas de sustentabilidade.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="grid gap-6 md:grid-cols-2">
+                                    <div className="flex items-center gap-4 p-4 rounded-lg bg-secondary">
+                                        <HeartHandshake className="h-8 w-8 text-primary" />
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Total de Campanhas</p>
+                                            <p className="text-2xl font-bold">{totalCampaigns}</p>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="flex items-center gap-4 p-4 rounded-lg bg-secondary">
-                                    <Star className="h-8 w-8 text-primary" />
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Apoiadores Únicos</p>
-                                        <p className="text-2xl font-bold">{totalUniqueSupporters}</p>
+                                    <div className="flex items-center gap-4 p-4 rounded-lg bg-secondary">
+                                        <Star className="h-8 w-8 text-primary" />
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Apoiadores Únicos</p>
+                                            <p className="text-2xl font-bold">{totalUniqueSupporters}</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
+                        </Link>
                     </div>
                 </>
             ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Campanhas Apoiadas</CardTitle>
-                            <HeartHandshake className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{providerAnalytics.supportedCampaigns}</div>
-                            <p className="text-xs text-muted-foreground">
-                                Contribuições para um condomínio melhor
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Propostas Enviadas</CardTitle>
-                            <FileText className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{providerAnalytics.proposalsSent}</div>
-                             <p className="text-xs text-muted-foreground">
-                                nos últimos 30 dias
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Propostas Aceitas</CardTitle>
-                            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{providerAnalytics.proposalsAccepted}</div>
-                            <p className="text-xs text-muted-foreground">
-                                Taxa de conversão de {( (providerAnalytics.proposalsAccepted / providerAnalytics.proposalsSent) * 100).toFixed(1)}%
-                            </p>
-                        </CardContent>
-                    </Card>
+                    <Link href="/campaigns">
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Campanhas Apoiadas</CardTitle>
+                                <HeartHandshake className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{providerAnalytics.supportedCampaigns}</div>
+                                <p className="text-xs text-muted-foreground">
+                                    Contribuições para um condomínio melhor
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link href="/demands">
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Propostas Enviadas</CardTitle>
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{providerAnalytics.proposalsSent}</div>
+                                <p className="text-xs text-muted-foreground">
+                                    nos últimos 30 dias
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link href="/demands">
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Propostas Aceitas</CardTitle>
+                                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{providerAnalytics.proposalsAccepted}</div>
+                                <p className="text-xs text-muted-foreground">
+                                    Taxa de conversão de {( (providerAnalytics.proposalsAccepted / providerAnalytics.proposalsSent) * 100).toFixed(1)}%
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </Link>
                 </div>
             )}
         </div>
