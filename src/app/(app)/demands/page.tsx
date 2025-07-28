@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { collection, query, where, orderBy, Query } from '@/lib/firebase';
@@ -47,14 +47,14 @@ export default function DemandsPage() {
   const [user, loadingUser] = useAuthState(auth);
   const [filter, setFilter] = useState<CategoryKey>('all');
 
-  const demandsCollectionRef = collection(db, 'demands');
-  
-  let demandsQuery: Query;
-  if (filter === 'all') {
-    demandsQuery = query(demandsCollectionRef, orderBy('createdAt', 'desc'));
-  } else {
-    demandsQuery = query(demandsCollectionRef, where('category', '==', filter), orderBy('createdAt', 'desc'));
-  }
+  const demandsQuery = useMemo(() => {
+    const demandsCollectionRef = collection(db, 'demands');
+    if (filter === 'all') {
+      return query(demandsCollectionRef, orderBy('createdAt', 'desc'));
+    } else {
+      return query(demandsCollectionRef, where('category', '==', filter), orderBy('createdAt', 'desc'));
+    }
+  }, [filter]);
 
   const [demands, loadingDemands, error] = useCollectionData(demandsQuery, { idField: 'id' });
 
@@ -128,7 +128,7 @@ export default function DemandsPage() {
             <TableBody>
               {loading ? (
                 [...Array(5)].map((_, i) => (
-                  <TableRow key={i}>
+                  <TableRow key={`skeleton-${i}`}>
                     <TableCell><Skeleton className="h-5 w-48" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                     <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-32" /></TableCell>
