@@ -2,8 +2,8 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { notFound, useParams } from 'next/navigation';
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, increment, serverTimestamp, query } from 'firebase/firestore';
+import { useParams } from 'next/navigation';
+import { collection, doc, getDoc, addDoc, updateDoc, increment, serverTimestamp, query } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import Link from 'next/link';
@@ -128,11 +128,27 @@ export default function CampaignDetailPage() {
         );
     }
 
+    if (errorCampaign) {
+      return <div className="text-center text-destructive p-8">Erro ao carregar a campanha: {errorCampaign.message}</div>;
+    }
+
     if (!campaign) {
-        if (!loadingCampaign && (errorCampaign || !campaign)) {
-            notFound();
-        }
-        return null; // or some other placeholder while not found is resolving
+        return (
+            <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-6">
+                <div className="flex items-center gap-4">
+                    <Button variant="outline" size="icon" className="h-7 w-7" asChild>
+                        <Link href="/campaigns">
+                            <ChevronLeft className="h-4 w-4" />
+                            <span className="sr-only">Voltar para Campanhas</span>
+                        </Link>
+                    </Button>
+                </div>
+                <Card className="text-center p-8">
+                    <CardTitle>Campanha não encontrada</CardTitle>
+                    <CardDescription>Esta campanha não existe ou pode ter sido removida.</CardDescription>
+                </Card>
+            </div>
+        )
     }
     
     const progress = Math.min(((campaign.current || 0) / campaign.goal) * 100, 100);

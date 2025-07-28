@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, notFound, useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -159,11 +159,27 @@ export default function DemandDetailPage() {
       )
   }
   
+  if (demandError) {
+    return <div className="text-center text-destructive p-8">Erro ao carregar a demanda: {demandError.message}</div>;
+  }
+
   if (!demand) {
-    if (!loadingDemand && (demandError || !demand)) {
-        notFound();
-    }
-    return null; // or some other placeholder while not found is resolving
+      return (
+        <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-6">
+            <div className="flex items-center gap-4">
+                <Button variant="outline" size="icon" className="h-7 w-7" asChild>
+                    <Link href="/demands">
+                        <ChevronLeft className="h-4 w-4" />
+                        <span className="sr-only">Voltar para Demandas</span>
+                    </Link>
+                </Button>
+            </div>
+            <Card className="text-center p-8">
+                <CardTitle>Demanda não encontrada</CardTitle>
+                <CardDescription>Esta demanda não existe ou pode ter sido removida.</CardDescription>
+            </Card>
+        </div>
+      )
   }
   
   const isDemandCreator = user?.uid === demand.authorId;
