@@ -20,14 +20,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useDocumentData, useCollectionData } from 'react-firebase-hooks/firestore';
 
-type CampaignData = {
-    title: string;
-    description: string;
-    imageUrl: string;
-    goal: number;
-    current: number;
-};
-
 type SupporterData = {
     id: string;
     amount: number;
@@ -48,7 +40,7 @@ export default function CampaignDetailPage() {
     const [campaign, loadingCampaign, errorCampaign] = useDocumentData(campaignDocRef);
 
     const supportersCollectionRef = id ? collection(db, `campaigns/${id}/supporters`) : null;
-    const [supporters, loadingRawSupporters, errorSupporters] = useCollectionData(supportersCollectionRef, { idField: 'id' });
+    const [supporters, loadingRawSupporters] = useCollectionData(supportersCollectionRef, { idField: 'id' });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [supportValue, setSupportValue] = useState("");
@@ -136,8 +128,11 @@ export default function CampaignDetailPage() {
         );
     }
 
-    if (!campaign || errorCampaign) {
-        return notFound();
+    if (!campaign) {
+        if (!loadingCampaign && (errorCampaign || !campaign)) {
+            notFound();
+        }
+        return null; // or some other placeholder while not found is resolving
     }
     
     const progress = Math.min(((campaign.current || 0) / campaign.goal) * 100, 100);

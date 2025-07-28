@@ -159,8 +159,11 @@ export default function DemandDetailPage() {
       )
   }
   
-  if (!demand || demandError) {
-    notFound();
+  if (!demand) {
+    if (!loadingDemand && (demandError || !demand)) {
+        notFound();
+    }
+    return null; // or some other placeholder while not found is resolving
   }
   
   const isDemandCreator = user?.uid === demand.authorId;
