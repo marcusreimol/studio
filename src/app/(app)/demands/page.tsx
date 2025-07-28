@@ -47,10 +47,14 @@ export default function DemandsPage() {
   const [user, loadingUser] = useAuthState(auth);
   const [filter, setFilter] = useState<CategoryKey>('all');
 
-  const demandsCollection = collection(db, 'demands');
-  const demandsQuery = filter === 'all'
-    ? query(demandsCollection, orderBy('createdAt', 'desc'))
-    : query(demandsCollection, where('category', '==', filter), orderBy('createdAt', 'desc'));
+  const demandsCollectionRef = collection(db, 'demands');
+  
+  let demandsQuery: Query;
+  if (filter === 'all') {
+    demandsQuery = query(demandsCollectionRef, orderBy('createdAt', 'desc'));
+  } else {
+    demandsQuery = query(demandsCollectionRef, where('category', '==', filter), orderBy('createdAt', 'desc'));
+  }
 
   const [demands, loadingDemands, error] = useCollectionData(demandsQuery, { idField: 'id' });
 
