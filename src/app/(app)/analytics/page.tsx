@@ -6,7 +6,7 @@ import { DollarSign, Briefcase, Users, HeartHandshake, Star, FileText, CheckCirc
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useDocumentData, useCollectionData } from "react-firebase-hooks/firestore";
 import { auth, db } from "@/lib/firebase";
-import { doc, collection, query, getDocs } from "firebase/firestore";
+import { doc, collection, query, getDocs, where } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
@@ -20,13 +20,18 @@ export default function AnalyticsPage() {
     const [totalUniqueSupporters, setTotalUniqueSupporters] = useState(0);
     const [loadingSupporters, setLoadingSupporters] = useState(true);
 
+    const [providerAnalytics, setProviderAnalytics] = useState({
+        supportedCampaigns: 0,
+        proposalsSent: 0,
+        proposalsAccepted: 0,
+    });
+    const [loadingProviderAnalytics, setLoadingProviderAnalytics] = useState(true);
+
     useEffect(() => {
-        const fetchSupporters = async () => {
+        const fetchSindicoData = async () => {
             if (!campaigns) return;
             setLoadingSupporters(true);
             const supporterIds = new Set<string>();
-
-            // Use Promise.all to fetch all supporter subcollections concurrently
             await Promise.all(
                 campaigns.map(async (campaign) => {
                     if (campaign && campaign.id) {
@@ -37,25 +42,65 @@ export default function AnalyticsPage() {
                     }
                 })
             );
-
             setTotalUniqueSupporters(supporterIds.size);
             setLoadingSupporters(false);
         };
         
-        if (campaigns) {
-            fetchSupporters();
+        if (campaigns && profile?.userType === 'sindico') {
+            fetchSindicoData();
         }
-    }, [campaigns]);
+    }, [campaigns, profile]);
+
+    useEffect(() => {
+        const fetchProviderData = async () => {
+            if (!user) return;
+            setLoadingProviderAnalytics(true);
+
+            // Supported Campaigns
+            const campaignsQuery = query(collection(db, 'campaigns'));
+            const campaignsSnapshot = await getDocs(campaignsQuery);
+            let supportedCount = 0;
+            for (const campaignDoc of campaignsSnapshot.docs) {
+                const supportersSubCol = collection(db, 'campaigns', campaignDoc.id, 'supporters');
+                const supporterQuery = query(supportersSubCol, where('providerId', '==', user.uid));
+                const supporterSnapshot = await getDocs(supporterQuery);
+                if (!supporterSnapshot.empty) {
+                    supportedCount++;
+                }
+            }
+            
+            // Proposals Sent
+            const demandsQuery = query(collection(db, 'demands'));
+            const demandsSnapshot = await getDocs(demandsQuery);
+            let sentCount = 0;
+            for (const demandDoc of demandsSnapshot.docs) {
+                const proposalsSubCol = collection(db, 'demands', demandDoc.id, 'proposals');
+                const proposalQuery = query(proposalsSubCol, where('providerId', '==', user.uid));
+                const proposalSnapshot = await getDocs(proposalQuery);
+                sentCount += proposalSnapshot.size;
+            }
+
+            // Proposals Accepted
+            const acceptedQuery = query(collection(db, 'demands'), where('hiredProviderId', '==', user.uid));
+            const acceptedSnapshot = await getDocs(acceptedQuery);
+            
+            setProviderAnalytics({
+                supportedCampaigns: supportedCount,
+                proposalsSent: sentCount,
+                proposalsAccepted: acceptedSnapshot.size
+            });
+
+            setLoadingProviderAnalytics(false);
+        };
+
+        if (user && profile?.userType === 'prestador') {
+            fetchProviderData();
+        }
+    }, [user, profile]);
 
 
-    // Mock data for provider analytics
-    const providerAnalytics = {
-        supportedCampaigns: 2,
-        proposalsSent: 15,
-        proposalsAccepted: 4,
-    };
-
-    const loading = loadingProfile || loadingCampaigns || loadingSupporters;
+    const isSindico = profile?.userType === 'sindico';
+    const loading = loadingProfile || (isSindico ? (loadingCampaigns || loadingSupporters) : loadingProviderAnalytics);
 
     if (loading) {
         return (
@@ -73,7 +118,6 @@ export default function AnalyticsPage() {
         )
     }
 
-    const isSindico = profile?.userType === 'sindico';
     const totalCampaigns = campaigns?.length || 0;
 
     return (
@@ -91,14 +135,14 @@ export default function AnalyticsPage() {
                             <Card>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">
-                                        Total Investido em Demandas
+                                        Total Investido (Em breve)
                                     </CardTitle>
                                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-2xl font-bold">R$ 45.231,89</div>
+                                    <div className="text-2xl font-bold">R$ 0,00</div>
                                     <p className="text-xs text-muted-foreground">
-                                        +20.1% em relação ao mês passado
+                                        Funcionalidade em desenvolvimento
                                     </p>
                                 </CardContent>
                             </Card>
@@ -107,14 +151,14 @@ export default function AnalyticsPage() {
                             <Card>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">
-                                        Demandas Concluídas
+                                        Demandas Concluídas (Em breve)
                                     </CardTitle>
                                     <Briefcase className="h-4 w-4 text-muted-foreground" />
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-2xl font-bold">+12</div>
+                                    <div className="text-2xl font-bold">+0</div>
                                     <p className="text-xs text-muted-foreground">
-                                        este mês
+                                        Funcionalidade em desenvolvimento
                                     </p>
                                 </CardContent>
                             </Card>
@@ -123,14 +167,14 @@ export default function AnalyticsPage() {
                             <Card>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">
-                                        Novos Fornecedores
+                                        Novos Fornecedores (Em breve)
                                     </CardTitle>
                                     <Users className="h-4 w-4 text-muted-foreground" />
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-2xl font-bold">+3</div>
+                                    <div className="text-2xl font-bold">+0</div>
                                     <p className="text-xs text-muted-foreground">
-                                        desde a semana passada
+                                        Funcionalidade em desenvolvimento
                                     </p>
                                 </CardContent>
                             </Card>
@@ -188,7 +232,7 @@ export default function AnalyticsPage() {
                             <CardContent>
                                 <div className="text-2xl font-bold">{providerAnalytics.proposalsSent}</div>
                                 <p className="text-xs text-muted-foreground">
-                                    nos últimos 30 dias
+                                    Total de propostas enviadas
                                 </p>
                             </CardContent>
                         </Card>
@@ -202,7 +246,10 @@ export default function AnalyticsPage() {
                             <CardContent>
                                 <div className="text-2xl font-bold">{providerAnalytics.proposalsAccepted}</div>
                                 <p className="text-xs text-muted-foreground">
-                                    Taxa de conversão de {( (providerAnalytics.proposalsAccepted / providerAnalytics.proposalsSent) * 100).toFixed(1)}%
+                                    { providerAnalytics.proposalsSent > 0 ?
+                                        `Taxa de conversão de ${( (providerAnalytics.proposalsAccepted / providerAnalytics.proposalsSent) * 100).toFixed(1)}%`
+                                        : 'Nenhuma proposta enviada ainda'
+                                    }
                                 </p>
                             </CardContent>
                         </Card>

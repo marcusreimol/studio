@@ -6,23 +6,15 @@ import {
   Activity,
   ArrowUpRight,
   Briefcase,
-  CircleUser,
-  CreditCard,
-  DollarSign,
-  Menu,
-  Package2,
-  Search,
   Users,
 } from "lucide-react";
 
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useDocumentData } from 'react-firebase-hooks/firestore';
-import { auth, db, collection, query, orderBy, limit } from '@/lib/firebase';
+import { auth, db, collection, query, orderBy, limit, where, getDocs } from '@/lib/firebase';
 import { doc } from 'firebase/firestore';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -40,6 +32,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
 
 export default function Dashboard() {
   const [user, loadingUser] = useAuthState(auth);
@@ -49,8 +43,42 @@ export default function Dashboard() {
   const demandsQuery = query(collection(db, 'demands'), orderBy('createdAt', 'desc'), limit(5));
   const [demands, loadingDemands] = useCollectionData(demandsQuery, { idField: 'id' });
 
-  const loading = loadingUser || loadingProfile || loadingDemands;
+  const [stats, setStats] = useState({ proposals: 0, inProgress: 0 });
+  const [loadingStats, setLoadingStats] = useState(true);
 
+  useEffect(() => {
+    async function fetchStats() {
+      if (!user) return;
+      setLoadingStats(true);
+      
+      const proposalsQuery = query(
+        collection(db, 'demands'),
+        where('authorId', '==', user.uid)
+      );
+      const proposalsSnapshot = await getDocs(proposalsQuery);
+      let totalProposals = 0;
+      for (const demandDoc of proposalsSnapshot.docs) {
+        const proposalsCol = collection(db, 'demands', demandDoc.id, 'proposals');
+        const proposalsDocs = await getDocs(proposalsCol);
+        totalProposals += proposalsDocs.size;
+      }
+      
+      const inProgressQuery = query(
+        collection(db, 'demands'),
+        where('authorId', '==', user.uid),
+        where('status', '==', 'contratado')
+      );
+      const inProgressSnapshot = await getDocs(inProgressQuery);
+      
+      setStats({ proposals: totalProposals, inProgress: inProgressSnapshot.size });
+      setLoadingStats(false);
+    }
+    if (user) {
+      fetchStats();
+    }
+  }, [user]);
+
+  const loading = loadingUser || loadingProfile || loadingDemands || loadingStats;
 
   if (loading) {
     return (
@@ -59,7 +87,7 @@ export default function Dashboard() {
           <Skeleton className="h-9 w-64" />
           <Skeleton className="h-10 w-44" />
         </div>
-        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
           <Skeleton className="h-32" />
           <Skeleton className="h-32" />
           <Skeleton className="h-32" />
@@ -81,7 +109,7 @@ export default function Dashboard() {
                 <Link href="/demands/new">Publicar Nova Demanda</Link>
             </Button>
         </div>
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
         <Link href="/demands">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -107,9 +135,9 @@ export default function Dashboard() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+12</div>
+              <div className="text-2xl font-bold">+{stats.proposals}</div>
               <p className="text-xs text-muted-foreground">
-                Nas últimas 24 horas
+                Em todas as suas demandas
               </p>
             </CardContent>
           </Card>
@@ -121,16 +149,16 @@ export default function Dashboard() {
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">1</div>
+              <div className="text-2xl font-bold">{stats.inProgress}</div>
               <p className="text-xs text-muted-foreground">
-                Pintura da fachada
+                Demandas contratadas
               </p>
             </CardContent>
           </Card>
         </Link>
       </div>
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
+      <div className="grid gap-4 md:gap-8">
+        <Card>
           <CardHeader className="flex flex-row items-center">
             <div className="grid gap-2">
               <CardTitle>
@@ -152,10 +180,10 @@ export default function Dashboard() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Título</TableHead>
-                  <TableHead className="hidden xl:table-column">
+                  <TableHead className="hidden xl:table-cell">
                     Categoria
                   </TableHead>
-                  <TableHead className="hidden xl:table-column">
+                  <TableHead className="hidden xl:table-cell">
                     Status
                   </TableHead>
                   <TableHead className="text-right">Propostas</TableHead>
@@ -170,11 +198,11 @@ export default function Dashboard() {
                         {demand.location}
                         </div>
                     </TableCell>
-                    <TableCell className="hidden xl:table-column">
+                    <TableCell className="hidden xl:table-cell">
                         {demand.category}
                     </TableCell>
-                    <TableCell className="hidden xl:table-column">
-                        <Badge className="text-xs" variant="outline">
+                    <TableCell className="hidden xl:table-cell">
+                        <Badge className="text-xs" variant={demand.status === 'aberto' ? 'outline' : 'default'}>
                         {demand.status}
                         </Badge>
                     </TableCell>
