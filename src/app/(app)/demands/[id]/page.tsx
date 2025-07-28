@@ -165,6 +165,7 @@ export default function DemandDetailPage() {
   
   const isDemandCreator = user?.uid === demand.authorId;
   const isDemandOpen = demand.status === 'aberto';
+  const isProvider = profile?.userType === 'prestador';
 
   return (
     <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-6">
@@ -208,7 +209,7 @@ export default function DemandDetailPage() {
                 <CardContent>
                     {demand.safetyConcerns && demand.safetyConcerns.length > 0 ? (
                         <ul className="list-disc pl-5 text-muted-foreground space-y-1">
-                           {demand.safetyConcerns.map((concern, index) => (
+                           {demand.safetyConcerns.map((concern: string, index: number) => (
                                 <li key={index}>{concern}</li>
                            ))}
                         </ul>
@@ -220,7 +221,7 @@ export default function DemandDetailPage() {
         </div>
         
         
-        {isDemandOpen && (
+        {isDemandOpen && isProvider && (
             <Card>
                 <CardHeader>
                     <CardTitle>Enviar Cotação</CardTitle>
@@ -347,7 +348,3 @@ export default function DemandDetailPage() {
     </div>
   );
 }
-
-    
-
-    
