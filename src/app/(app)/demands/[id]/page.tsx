@@ -160,7 +160,7 @@ export default function DemandDetailPage() {
   }
   
   if (!demand || demandError) {
-    return notFound();
+    notFound();
   }
   
   const isDemandCreator = user?.uid === demand.authorId;
@@ -348,3 +348,5 @@ export default function DemandDetailPage() {
     </div>
   );
 }
+
+    
