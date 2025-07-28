@@ -1,17 +1,14 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { collection, query, where, orderBy, Query } from '@/lib/firebase';
+import { collection, query, orderBy } from '@/lib/firebase';
 import { auth, db } from '@/lib/firebase';
-import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
@@ -28,33 +25,14 @@ type Demand = {
     nanoseconds: number;
   };
   proposalsCount: number;
+  status: string;
 };
-
-const categories = {
-  all: "Todas",
-  hidraulica: "Hidráulica",
-  eletrica: "Elétrica",
-  seguranca: "Segurança",
-  pintura: "Pintura",
-  limpeza: "Limpeza",
-  jardinagem: "Jardinagem",
-  outros: "Outros"
-};
-
-type CategoryKey = keyof typeof categories;
 
 export default function DemandsPage() {
   const [user, loadingUser] = useAuthState(auth);
-  const [filter, setFilter] = useState<CategoryKey>('all');
 
-  const demandsQuery = useMemo(() => {
-    const demandsCollectionRef = collection(db, 'demands');
-    if (filter === 'all') {
-      return query(demandsCollectionRef, orderBy('createdAt', 'desc'));
-    } else {
-      return query(demandsCollectionRef, where('category', '==', filter), orderBy('createdAt', 'desc'));
-    }
-  }, [filter]);
+  const demandsCollectionRef = collection(db, 'demands');
+  const demandsQuery = query(demandsCollectionRef, orderBy('createdAt', 'desc'));
 
   const [demands, loadingDemands, error] = useCollectionData(demandsQuery, { idField: 'id' });
 
@@ -66,38 +44,13 @@ export default function DemandsPage() {
     return formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
   };
   
-  const getCardTitle = () => {
-    return "Demandas de Serviço";
-  };
-  
-  const getCardDescription = () => {
-    return "Encontre ou gerencie oportunidades de serviço em condomínios.";
-  };
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold md:text-3xl font-headline">
-          {loading ? <Skeleton className="h-8 w-48" /> : getCardTitle()}
+          {loading ? <Skeleton className="h-8 w-48" /> : "Demandas de Serviço"}
         </h1>
         <div className="flex items-center gap-2">
-            <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                {categories[filter]}
-                <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-                <DropdownMenuLabel>Filtrar por Categoria</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuRadioGroup value={filter} onValueChange={(value) => setFilter(value as CategoryKey)}>
-                {Object.entries(categories).map(([key, value]) => (
-                    <DropdownMenuRadioItem key={key} value={key}>{value}</DropdownMenuRadioItem>
-                ))}
-                </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-            </DropdownMenu>
             <Button asChild>
               <Link href="/demands/new">Publicar Demanda</Link>
             </Button>
@@ -107,7 +60,7 @@ export default function DemandsPage() {
       <Card>
         <CardHeader>
           <CardDescription>
-             {loading ? <Skeleton className="h-5 w-80" /> : getCardDescription()}
+             {loading ? <Skeleton className="h-5 w-80" /> : "Encontre ou gerencie oportunidades de serviço em condomínios."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -115,7 +68,7 @@ export default function DemandsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Demanda</TableHead>
-                <TableHead>Categoria</TableHead>
+                <TableHead className="hidden md:table-cell">Status</TableHead>
                 <TableHead className="hidden md:table-cell">
                   Localização
                 </TableHead>
@@ -130,7 +83,7 @@ export default function DemandsPage() {
                 [...Array(5)].map((_, i) => (
                   <TableRow key={`skeleton-${i}`}>
                     <TableCell><Skeleton className="h-5 w-48" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-20" /></TableCell>
                     <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-32" /></TableCell>
                     <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-24" /></TableCell>
                     <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
@@ -148,8 +101,8 @@ export default function DemandsPage() {
                     <TableCell className="font-medium">
                        {demand.title}
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{categories[demand.category as CategoryKey] || demand.category}</Badge>
+                    <TableCell className="hidden md:table-cell">
+                      <Badge variant={demand.status === 'aberto' ? "outline" : "default"}>{demand.status}</Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       {demand.location}
@@ -167,7 +120,7 @@ export default function DemandsPage() {
               ) : (
                  <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                      Nenhuma demanda encontrada para esta categoria.
+                      Nenhuma demanda encontrada.
                     </TableCell>
                   </TableRow>
               )}
