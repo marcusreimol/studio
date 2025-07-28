@@ -8,7 +8,7 @@ import { useDocumentData, useCollectionData } from "react-firebase-hooks/firesto
 import { auth, db } from "@/lib/firebase";
 import { doc, collection, query, getDocs } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 
 export default function AnalyticsPage() {
@@ -24,21 +24,27 @@ export default function AnalyticsPage() {
         const fetchSupporters = async () => {
             if (!campaigns) return;
             setLoadingSupporters(true);
-            const supporterPromises = campaigns.map(campaign => getDocs(collection(db, `campaigns/${campaign.id}/supporters`)));
-            const supporterSnapshots = await Promise.all(supporterPromises);
-            
-            const allSupporters = new Set<string>();
-            supporterSnapshots.forEach(snapshot => {
-                snapshot.forEach(doc => {
-                    allSupporters.add(doc.data().providerId);
-                });
-            });
+            const supporterIds = new Set<string>();
 
-            setTotalUniqueSupporters(allSupporters.size);
+            // Use Promise.all to fetch all supporter subcollections concurrently
+            await Promise.all(
+                campaigns.map(async (campaign) => {
+                    if (campaign && campaign.id) {
+                       const supportersSnapshot = await getDocs(collection(db, `campaigns/${campaign.id}/supporters`));
+                       supportersSnapshot.forEach(doc => {
+                           supporterIds.add(doc.data().providerId);
+                       });
+                    }
+                })
+            );
+
+            setTotalUniqueSupporters(supporterIds.size);
             setLoadingSupporters(false);
         };
-
-        fetchSupporters();
+        
+        if (campaigns) {
+            fetchSupporters();
+        }
     }, [campaigns]);
 
 
