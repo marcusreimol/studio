@@ -17,8 +17,9 @@ import {
 
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useDocumentData } from 'react-firebase-hooks/firestore';
-import { auth, db } from '@/lib/firebase';
+import { auth, db, collection, query, orderBy, limit } from '@/lib/firebase';
 import { doc } from 'firebase/firestore';
+import { useCollectionData } from 'react-firebase-hooks/firestore';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -38,15 +39,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { demands } from "@/lib/data";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Dashboard() {
-  const [user] = useAuthState(auth);
+  const [user, loadingUser] = useAuthState(auth);
   const userDocRef = user ? doc(db, "users", user.uid) : null;
-  const [profile, loading] = useDocumentData(userDocRef);
+  const [profile, loadingProfile] = useDocumentData(userDocRef);
 
-  const myDemands = demands.slice(0, 2);
+  const demandsQuery = query(collection(db, 'demands'), orderBy('createdAt', 'desc'), limit(5));
+  const [demands, loadingDemands] = useCollectionData(demandsQuery, { idField: 'id' });
+
+  const loading = loadingUser || loadingProfile || loadingDemands;
+
 
   if (loading) {
     return (
@@ -87,7 +91,7 @@ export default function Dashboard() {
               <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">4</div>
+              <div className="text-2xl font-bold">{demands?.length || 0}</div>
               <p className="text-xs text-muted-foreground">
                 Aguardando propostas
               </p>
@@ -158,7 +162,7 @@ export default function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {myDemands.map((demand) => (
+                {demands?.map((demand:any) => (
                     <TableRow key={demand.id}>
                     <TableCell>
                         <div className="font-medium">{demand.title}</div>
@@ -171,10 +175,10 @@ export default function Dashboard() {
                     </TableCell>
                     <TableCell className="hidden xl:table-column">
                         <Badge className="text-xs" variant="outline">
-                        Aberto
+                        {demand.status}
                         </Badge>
                     </TableCell>
-                    <TableCell className="text-right">{demand.proposals}</TableCell>
+                    <TableCell className="text-right">{demand.proposalsCount}</TableCell>
                     </TableRow>
                 ))}
               </TableBody>
