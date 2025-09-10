@@ -1,4 +1,4 @@
-# **App Name**: SustentaZONA
+# **App Name**: ZONA Sustentável 
 
 ## Core Features:
 
